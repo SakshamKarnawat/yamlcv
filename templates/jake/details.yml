@@ -1,0 +1,77 @@
+options:
+  icons: true # show fontawesome icons in links (true/false)
+  font: "charter" # charter | times | default
+  color_links: false # colored links vs underlined black
+
+heading:
+  name: "Jake Ryan"
+  phone: "123-456-7890"
+  email: "jake@example.com"
+  linkedin: "linkedin.com/in/jakeryan"
+  github: "github.com/jakeryan"
+  website: "jakeryan.dev" # optional, remove if not needed
+  title: "Senior Software Engineer" # optional, remove if not needed
+  summary: "5+ years building scalable backend systems and developer tools. Passionate about clean architecture and open source." # optional
+
+education:
+  - institution: "Southwestern University"
+    location: "Georgetown, TX"
+    degree: "Bachelor of Science in Computer Science"
+    dates: "Aug. 2015 -- May 2019"
+
+experience:
+  - title: "Senior Software Engineer"
+    company: "Acme Corp"
+    location: "San Francisco, CA"
+    dates: "Jan. 2022 -- Present"
+    bullets:
+      - "Led migration of monolithic backend to microservices using Go and Kubernetes, reducing p99 latency by 40%"
+      - "Designed and shipped internal developer platform used by 200+ engineers across 12 teams"
+      - "Mentored 3 junior engineers and conducted 50+ technical interviews"
+
+  - title: "Software Engineer"
+    company: "Globex Technologies"
+    location: "Austin, TX"
+    dates: "Jul. 2020 -- Dec. 2021"
+    bullets:
+      - "Built REST APIs in Python/FastAPI serving 2M+ requests/day with 99.9% uptime"
+      - "Reduced CI/CD pipeline runtime by 60% by parallelizing test suites and caching Docker layers"
+      - "Owned end-to-end delivery of payments integration with Stripe, processing $5M+ monthly"
+
+  - title: "Software Engineer"
+    company: "Initech Solutions"
+    location: "Remote"
+    dates: "Jun. 2019 -- Jun. 2020"
+    bullets:
+      - "Developed React frontend for enterprise dashboard, improving load time by 35%"
+      - "Wrote automated test suite covering 85% of codebase using pytest and Cypress"
+      - "Collaborated with product and design to ship 3 major features per quarter"
+
+  - title: "Freelance Software Developer"
+    company: "Independent"
+    location: "Remote"
+    dates: "Jan. 2019 -- May 2019"
+    bullets:
+      - "Built and delivered 4 full-stack web apps for small business clients using React and Node.js"
+      - "Set up automated deployment pipelines on AWS reducing client deployment time from hours to minutes"
+
+projects:
+  - name: "ResumeCraft"
+    stack: "Python, LaTeX, YAML, watchdog"
+    dates: "Jan. 2024 -- Present"
+    bullets:
+      - "Built YAML-driven LaTeX resume generator with live watch mode and auto PDF compilation"
+      - "Supports multiple templates, optional sections, FontAwesome icons, and custom fonts"
+
+  - name: "DevDash"
+    stack: "React, TypeScript, Go, PostgreSQL"
+    dates: "Mar. 2023 -- Dec. 2023"
+    bullets:
+      - "Built internal developer dashboard aggregating metrics from GitHub, Jira, and PagerDuty"
+      - "Reduced mean time to incident response by 25% across engineering org"
+
+skills:
+  Languages: "Go, Python, TypeScript, SQL, Bash"
+  Frameworks: "React, FastAPI, Node.js, Gin, gRPC"
+  Developer Tools: "Git, Docker, Kubernetes, Terraform, AWS, GitHub Actions, VS Code"
+  Libraries: "pandas, SQLAlchemy, Celery, Redis"

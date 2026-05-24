@@ -1,0 +1,22 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+.DS_Store
+.venv/
+generated/
+__pycache__/
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+
+details.personal.yml
