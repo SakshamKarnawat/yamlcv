@@ -2,7 +2,7 @@
 set -e
 
 REPO="https://github.com/SakshamKarnawat/yamlcv"
-DEST="$HOME/yamlcv"
+DEST="$(pwd)/yamlcv"
 
 echo "→ Installing yamlcv..."
 
