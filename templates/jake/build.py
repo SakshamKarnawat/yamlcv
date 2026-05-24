@@ -225,10 +225,9 @@ def main():
     tex += build_skills(data['skills'])
     tex += "\n\\end{document}\n"
 
-    fname = data['heading']['name'].split()[0].lower()
     output_dir = os.path.join(os.getcwd(), "generated")
     os.makedirs(output_dir, exist_ok=True)
-    output_file = os.path.join(output_dir, f"resume_{fname}.tex")
+    output_file = os.path.join(output_dir, "resume.tex")
 
     with open(output_file, "w") as f:
         f.write(tex)

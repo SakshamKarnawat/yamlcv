@@ -48,11 +48,9 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 self.send_error(404)
 
         elif parsed.path.startswith("/api/pdf"):
-            template = urllib.parse.parse_qs(parsed.query).get("template", ["jake"])[0]
-            # find pdf in generated
-            pdfs = list(GENERATED_DIR.glob("*.pdf"))
-            if pdfs:
-                self.serve_file(pdfs[0], "application/pdf")
+            pdf_path = GENERATED_DIR / "resume.pdf"
+            if pdf_path.exists():
+                self.serve_file(pdf_path, "application/pdf")
             else:
                 self.send_error(404, "No PDF yet")
 
