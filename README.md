@@ -57,6 +57,9 @@ options:
 - `projects` section is optional — remove from `details.yml` to exclude
 - To disable VS Code auto-rebuild on save: `"latex-workshop.latex.autoBuild.run": "never"` in `settings.json`
 - To add a new template: create `templates/{name}/` with its own `details.yml` and `build.py`
+- To use a personal yml file:
+  - CLI: `uv run templates/jake/build.py --details ~/path/to/details.personal.yml --watch`
+  - Web UI: `uv run server.py --details ~/path/to/details.personal.yml`
 
 ## Roadmap
 

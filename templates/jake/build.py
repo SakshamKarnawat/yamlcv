@@ -15,6 +15,7 @@ from watchdog.events import FileSystemEventHandler
 import time
 import sys
 import subprocess
+import argparse
 
 def escape(text):
     """Escape special LaTeX characters."""
@@ -91,7 +92,6 @@ def build_experience(exp_list):
 
 def build_projects(proj_list):
     items = ""
-    print(proj_list)
     for p in proj_list:
         bullets = "\n".join(
             rf"        \resumeItem{{{escape(b)}}}" for b in p['bullets']
@@ -208,10 +208,24 @@ def build_preamble(opts):
 """
 
 def main():
-    script_dir = os.path.dirname(os.path.abspath(__file__))
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--details', default=None)
+    parser.add_argument('--watch', action='store_true')
+    args, _ = parser.parse_known_args()
 
-    with open(os.path.join(script_dir, "details.yml"), "r") as f:
-        data = yaml.safe_load(f)
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    details_path = args.details if args.details else os.path.join(script_dir, "details.yml")
+
+    with open(details_path, "r") as f:
+        try:
+            data = yaml.safe_load(f)
+        except yaml.YAMLError as e:
+            print(f"✗ Invalid YAML: {e}", file=sys.stderr)
+            sys.exit(1)
+
+    if not data:
+        print("✗ Empty details.yml", file=sys.stderr)
+        sys.exit(1)
 
     opts = data.get('options', {})
 

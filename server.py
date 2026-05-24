@@ -17,6 +17,8 @@ import subprocess
 import http.server
 import urllib.parse
 from pathlib import Path
+import argparse
+import webbrowser
 
 ROOT = Path(__file__).parent
 TEMPLATES_DIR = ROOT / "templates"
@@ -56,7 +58,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
         elif parsed.path == "/api/status":
             self.json_response({"status": "ok"})
-
+        
         else:
             self.send_error(404)
 
@@ -69,20 +71,32 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             body = self.rfile.read(length).decode("utf-8")
             details_path = TEMPLATES_DIR / template / "details.yml"
             details_path.write_text(body)
-            # trigger build
-            threading.Thread(target=self.run_build, args=(template,), daemon=True).start()
-            self.json_response({"ok": True})
+            # blocking build — wait for result
+            error = self.run_build(template, Handler._custom_details)
+            if error:
+                self.json_response({"ok": False, "error": error})
+            else:
+                self.json_response({"ok": True, "error": None})
 
         else:
             self.send_error(404)
 
-    def run_build(self, template):
+    def run_build(self, template, details_path=None):
+        old_pdf = GENERATED_DIR / "resume.pdf"
+        if old_pdf.exists():
+            old_pdf.unlink()
+
         build_script = TEMPLATES_DIR / template / "build.py"
-        subprocess.run(
-            [sys.executable, str(build_script)],
-            cwd=ROOT,
-            capture_output=True
-        )
+        cmd = [sys.executable, str(build_script)]
+        if details_path:
+            cmd += ["--details", details_path]
+        result = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+        if result.returncode != 0:
+            return result.stderr + result.stdout
+        return None
+
+    _last_error = None
+    _custom_details = None
 
     def serve_file(self, path, content_type):
         try:
@@ -106,10 +120,18 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    import webbrowser
-    PORT = 7878
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--details', default=None, help='Path to custom details yml file')
+    parser.add_argument('--port', default=7878, type=int)
+    args = parser.parse_args()
+
+    Handler._custom_details = args.details
+
+    PORT = args.port
     server = http.server.HTTPServer(("localhost", PORT), Handler)
     print(f"→ yamlcv UI running at http://localhost:{PORT}")
+    if args.details:
+        print(f"→ using details: {args.details}")
     print("  Ctrl+C to stop")
     threading.Timer(1, lambda: webbrowser.open(f"http://localhost:{PORT}")).start()
     try:

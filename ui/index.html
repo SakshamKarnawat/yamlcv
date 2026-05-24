@@ -9,6 +9,14 @@
       href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:wght@300;400;500&display=swap"
       rel="stylesheet"
     />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css"
+    />
     <style>
       *,
       *::before,
@@ -181,25 +189,31 @@
         border-color: var(--accent);
       }
 
-      #editor {
+      .editor-wrap {
         flex: 1;
-        width: 100%;
-        background: var(--bg);
-        color: var(--text);
-        font-family: var(--font-mono);
-        font-size: 12.5px;
-        line-height: 1.7;
-        padding: 20px;
-        border: none;
-        outline: none;
-        resize: none;
-        tab-size: 2;
-        white-space: pre;
-        overflow: auto;
+        overflow: hidden;
+        position: relative;
       }
 
-      #editor::selection {
-        background: var(--accent-dim);
+      .CodeMirror {
+        height: 100% !important;
+        font-family: var(--font-mono) !important;
+        font-size: 12.5px !important;
+        line-height: 1.7 !important;
+        background: var(--bg) !important;
+      }
+
+      .CodeMirror-scroll {
+        padding: 8px 0;
+      }
+      .CodeMirror-cursor {
+        border-left: 2px solid var(--accent) !important;
+      }
+      .CodeMirror-selected {
+        background: var(--accent-dim) !important;
+      }
+      .CodeMirror-focused .CodeMirror-selected {
+        background: var(--accent-dim) !important;
       }
 
       /* unsaved indicator */
@@ -279,7 +293,23 @@
         font-size: 12px;
       }
 
-      /* TOAST */
+      .error-banner {
+        background: rgba(255, 107, 107, 0.08);
+        border-top: 1px solid rgba(255, 107, 107, 0.3);
+        padding: 10px 16px;
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--red);
+        max-height: 120px;
+        overflow-y: auto;
+        display: none;
+        white-space: pre-wrap;
+        line-height: 1.5;
+      }
+      .error-banner.visible {
+        display: block;
+      }
+
       .toast {
         position: fixed;
         bottom: 24px;
@@ -349,11 +379,9 @@
             onchange="loadTemplate()"
           ></select>
         </div>
-        <textarea
-          id="editor"
-          spellcheck="false"
-          placeholder="Loading..."
-        ></textarea>
+        <div class="editor-wrap">
+          <textarea id="editor"></textarea>
+        </div>
         <div class="unsaved-bar" id="unsaved-bar"></div>
       </div>
 
@@ -367,23 +395,45 @@
             <button class="btn-icon" onclick="downloadPDF()">↓ download</button>
           </div>
         </div>
-        <iframe id="pdf-frame" style="display: none"></iframe>
+        <iframe id="pdf-frame" style="display: none; flex: 1"></iframe>
         <div class="pdf-placeholder" id="pdf-placeholder">
           <div class="icon">⬚</div>
           <p>save to generate PDF</p>
         </div>
+        <div class="error-banner" id="error-banner"></div>
       </div>
     </div>
 
     <div class="toast" id="toast"></div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/yaml/yaml.min.js"></script>
     <script>
       let currentTemplate = "jake";
-      let unsaved = false;
       let pdfCacheBust = Date.now();
+      let cm;
 
-      // --- INIT ---
+      function initEditor() {
+        cm = CodeMirror.fromTextArea(document.getElementById("editor"), {
+          mode: "yaml",
+          theme: "material-darker",
+          lineNumbers: true,
+          indentWithTabs: false,
+          tabSize: 2,
+          indentUnit: 2,
+          lineWrapping: false,
+          autofocus: true,
+          extraKeys: {
+            Tab: (cmInstance) => cmInstance.execCommand("insertSoftTab"),
+            "Cmd-S": () => save(),
+            "Ctrl-S": () => save(),
+          },
+        });
+        cm.on("change", () => setUnsaved(true));
+      }
+
       async function init() {
+        initEditor();
         await loadTemplates();
         await loadDetails();
         await tryLoadPDF();
@@ -409,7 +459,7 @@
         const res = await fetch(`/api/details?template=${currentTemplate}`);
         if (res.ok) {
           const text = await res.text();
-          document.getElementById("editor").value = text;
+          cm.setValue(text);
           setUnsaved(false);
         }
       }
@@ -418,15 +468,14 @@
         const res = await fetch(
           `/api/pdf?template=${currentTemplate}&v=${pdfCacheBust}`,
         );
-        if (res.ok) {
+        if (res.ok)
           showPDF(`/api/pdf?template=${currentTemplate}&v=${pdfCacheBust}`);
-        }
       }
 
-      // --- SAVE & BUILD ---
       async function save() {
-        const content = document.getElementById("editor").value;
+        const content = cm.getValue();
         setStatus("building", "building...");
+        hideError();
         document.getElementById("btn-save").disabled = true;
 
         try {
@@ -436,13 +485,18 @@
             headers: { "Content-Type": "text/plain" },
           });
 
-          if (res.ok) {
+          const data = await res.json();
+
+          if (data.ok) {
             setUnsaved(false);
-            toast("✓ Building PDF...", "success");
-            // poll for new PDF
-            pollPDF();
+            pdfCacheBust = Date.now();
+            showPDF(`/api/pdf?template=${currentTemplate}&v=${pdfCacheBust}`);
+            setStatus("ready", "ready");
+            toast("✓ PDF updated", "success");
           } else {
-            throw new Error("Save failed");
+            setStatus("error", "build failed");
+            showError(data.error);
+            toast("✗ Build failed", "error");
           }
         } catch (e) {
           setStatus("error", "error");
@@ -452,35 +506,13 @@
         }
       }
 
-      function pollPDF() {
-        let attempts = 0;
-        const interval = setInterval(async () => {
-          attempts++;
-          pdfCacheBust = Date.now();
-          const res = await fetch(
-            `/api/pdf?template=${currentTemplate}&v=${pdfCacheBust}`,
-          );
-          if (res.ok) {
-            clearInterval(interval);
-            showPDF(`/api/pdf?template=${currentTemplate}&v=${pdfCacheBust}`);
-            setStatus("ready", "ready");
-            toast("✓ PDF updated", "success");
-          }
-          if (attempts > 30) {
-            clearInterval(interval);
-            setStatus("error", "build failed");
-            toast("✗ Build failed — check terminal", "error");
-          }
-        }, 1000);
-      }
-
-      // --- PDF ---
       function showPDF(url) {
         const frame = document.getElementById("pdf-frame");
         const placeholder = document.getElementById("pdf-placeholder");
         frame.src = url;
         frame.style.display = "block";
         placeholder.style.display = "none";
+        hideError();
       }
 
       function refreshPDF() {
@@ -491,20 +523,26 @@
       function downloadPDF() {
         const a = document.createElement("a");
         a.href = `/api/pdf?template=${currentTemplate}&v=${Date.now()}`;
-        a.download = `resume_${currentTemplate}.pdf`;
+        a.download = `resume.pdf`;
         a.click();
       }
 
-      // --- UI HELPERS ---
+      function showError(msg) {
+        const el = document.getElementById("error-banner");
+        el.textContent = msg;
+        el.classList.add("visible");
+      }
+
+      function hideError() {
+        document.getElementById("error-banner").classList.remove("visible");
+      }
+
       function setStatus(type, text) {
-        const dot = document.getElementById("status-dot");
-        const label = document.getElementById("status-text");
-        dot.className = `status-dot ${type}`;
-        label.textContent = text;
+        document.getElementById("status-dot").className = `status-dot ${type}`;
+        document.getElementById("status-text").textContent = text;
       }
 
       function setUnsaved(val) {
-        unsaved = val;
         document.getElementById("unsaved-bar").classList.toggle("visible", val);
       }
 
@@ -515,19 +553,6 @@
         setTimeout(() => el.classList.remove("show"), 3000);
       }
 
-      // --- EDITOR ---
-      document
-        .getElementById("editor")
-        .addEventListener("input", () => setUnsaved(true));
-
-      document.addEventListener("keydown", (e) => {
-        if ((e.metaKey || e.ctrlKey) && e.key === "s") {
-          e.preventDefault();
-          save();
-        }
-      });
-
-      // --- RESIZER ---
       const resizer = document.getElementById("resizer");
       const leftPane = document.getElementById("editor-pane");
       let isResizing = false;
@@ -538,7 +563,10 @@
       document.addEventListener("mousemove", (e) => {
         if (!isResizing) return;
         const pct = (e.clientX / window.innerWidth) * 100;
-        if (pct > 20 && pct < 80) leftPane.style.width = pct + "%";
+        if (pct > 20 && pct < 80) {
+          leftPane.style.width = pct + "%";
+          cm.refresh();
+        }
       });
       document.addEventListener("mouseup", () => {
         isResizing = false;
