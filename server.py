@@ -72,11 +72,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             details_path = TEMPLATES_DIR / template / "details.yml"
             details_path.write_text(body)
             # blocking build — wait for result
-            error = self.run_build(template, Handler._custom_details)
-            if error:
-                self.json_response({"ok": False, "error": error})
-            else:
-                self.json_response({"ok": True, "error": None})
+            error, warning = self.run_build(template, Handler._custom_details)
+            self.json_response({"ok": not error, "error": error, "warning": warning})
 
         else:
             self.send_error(404)
@@ -91,9 +88,12 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         if details_path:
             cmd += ["--details", details_path]
         result = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
-        if result.returncode != 0:
-            return result.stderr + result.stdout
-        return None
+        if result.returncode == 2:
+            # built ok but overflow warning
+            return None, result.stderr + result.stdout  # (error, warning)
+        elif result.returncode != 0:
+            return result.stderr + result.stdout, None  # (error, warning)
+        return None, None
 
     _last_error = None
     _custom_details = None

@@ -310,6 +310,21 @@
         display: block;
       }
 
+      .warning-banner {
+        background: rgba(245, 166, 35, 0.08);
+        border-top: 1px solid rgba(245, 166, 35, 0.3);
+        padding: 10px 16px;
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: #f5a623;
+        display: none;
+        white-space: pre-wrap;
+        line-height: 1.5;
+      }
+      .warning-banner.visible {
+        display: block;
+      }
+
       .toast {
         position: fixed;
         bottom: 24px;
@@ -401,6 +416,7 @@
           <p>save to generate PDF</p>
         </div>
         <div class="error-banner" id="error-banner"></div>
+        <div class="warning-banner" id="warning-banner"></div>
       </div>
     </div>
 
@@ -493,6 +509,7 @@
             showPDF(`/api/pdf?template=${currentTemplate}&v=${pdfCacheBust}`);
             setStatus("ready", "ready");
             toast("✓ PDF updated", "success");
+            if (data.warning) showWarning(data.warning); // show warning alongside PDF
           } else {
             setStatus("error", "build failed");
             showError(data.error);
@@ -513,6 +530,7 @@
         frame.style.display = "block";
         placeholder.style.display = "none";
         hideError();
+        hideWarning();
       }
 
       function refreshPDF() {
@@ -533,8 +551,18 @@
         el.classList.add("visible");
       }
 
+      function showWarning(msg) {
+        const el = document.getElementById("warning-banner");
+        el.textContent = msg;
+        el.classList.add("visible");
+      }
+
       function hideError() {
         document.getElementById("error-banner").classList.remove("visible");
+      }
+
+      function hideWarning() {
+        document.getElementById("warning-banner").classList.remove("visible");
       }
 
       function setStatus(type, text) {

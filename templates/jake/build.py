@@ -16,6 +16,7 @@ import time
 import sys
 import subprocess
 import argparse
+import re
 
 def escape(text):
     """Escape special LaTeX characters."""
@@ -225,6 +226,20 @@ def build_preamble(opts):
 \newcommand{{\resumeItemListEnd}}{{\end{{itemize}}\vspace{{-5pt}}}}
 """
 
+def check_page_overflow(output_dir):
+    log_file = os.path.join(output_dir, "resume.log")
+    if not os.path.exists(log_file):
+        return None
+    with open(log_file, "r", errors="ignore") as f:
+        content = f.read()
+    # latexmk log contains "Output written on resume.pdf (N pages"
+    match = re.search(r"Output written on.*?\((\d+) page", content)
+    if match:
+        pages = int(match.group(1))
+        if pages > 1:
+            return pages
+    return None
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--details', default=None)
@@ -266,10 +281,17 @@ def main():
 
     print(f"✓ {output_file} generated")
 
-    subprocess.Popen(
+    result = subprocess.run(
         ["latexmk", "-pdf", "-interaction=nonstopmode", output_file],
-        cwd=output_dir
+        cwd=output_dir,
+        capture_output=True
     )
+
+    pages = check_page_overflow(output_dir)
+    if pages:
+        print(f"⚠️  Resume is {pages} pages — consider trimming to fit 1 page", file=sys.stderr)
+        sys.exit(2)  # exit code 2 = warning (PDF still generated)
+
     print("✓ PDF build triggered")
 
 class YMLHandler(FileSystemEventHandler):
