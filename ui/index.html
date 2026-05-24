@@ -1,0 +1,550 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>yamlcv</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      :root {
+        --bg: #0f0f0f;
+        --surface: #161616;
+        --border: #252525;
+        --text: #e8e8e8;
+        --muted: #666;
+        --accent: #c8f562;
+        --accent-dim: rgba(200, 245, 98, 0.08);
+        --red: #ff6b6b;
+        --font-mono: "DM Mono", monospace;
+        --font-sans: "DM Sans", sans-serif;
+      }
+
+      html,
+      body {
+        height: 100%;
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--font-sans);
+        overflow: hidden;
+      }
+
+      /* TOP BAR */
+      header {
+        height: 48px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 20px;
+        position: relative;
+        z-index: 10;
+      }
+
+      .logo {
+        font-family: var(--font-mono);
+        font-size: 13px;
+        font-weight: 500;
+        letter-spacing: 0.08em;
+        color: var(--accent);
+      }
+
+      .logo span {
+        color: var(--muted);
+      }
+
+      .header-right {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .status {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--muted);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .status-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--muted);
+        transition: background 0.3s;
+      }
+
+      .status-dot.building {
+        background: #f5a623;
+        animation: pulse 1s infinite;
+      }
+      .status-dot.ready {
+        background: var(--accent);
+      }
+      .status-dot.error {
+        background: var(--red);
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.3;
+        }
+      }
+
+      .btn-save {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        font-weight: 500;
+        letter-spacing: 0.06em;
+        background: var(--accent);
+        color: #0f0f0f;
+        border: none;
+        padding: 6px 14px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: opacity 0.15s;
+      }
+
+      .btn-save:hover {
+        opacity: 0.85;
+      }
+      .btn-save:disabled {
+        opacity: 0.4;
+        cursor: default;
+      }
+
+      /* MAIN SPLIT */
+      .split {
+        display: flex;
+        height: calc(100vh - 48px);
+      }
+
+      /* LEFT — EDITOR */
+      .editor-pane {
+        width: 42%;
+        min-width: 320px;
+        display: flex;
+        flex-direction: column;
+        border-right: 1px solid var(--border);
+        position: relative;
+      }
+
+      .pane-header {
+        height: 36px;
+        padding: 0 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid var(--border);
+        background: var(--surface);
+      }
+
+      .pane-label {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .template-select {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        background: transparent;
+        color: var(--text);
+        border: 1px solid var(--border);
+        border-radius: 3px;
+        padding: 2px 6px;
+        outline: none;
+        cursor: pointer;
+      }
+
+      .template-select:focus {
+        border-color: var(--accent);
+      }
+
+      #editor {
+        flex: 1;
+        width: 100%;
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--font-mono);
+        font-size: 12.5px;
+        line-height: 1.7;
+        padding: 20px;
+        border: none;
+        outline: none;
+        resize: none;
+        tab-size: 2;
+        white-space: pre;
+        overflow: auto;
+      }
+
+      #editor::selection {
+        background: var(--accent-dim);
+      }
+
+      /* unsaved indicator */
+      .unsaved-bar {
+        height: 2px;
+        background: var(--accent);
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        opacity: 0;
+        transition: opacity 0.2s;
+      }
+      .unsaved-bar.visible {
+        opacity: 1;
+      }
+
+      /* RIGHT — PDF */
+      .preview-pane {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: #1a1a1a;
+      }
+
+      .preview-pane .pane-header {
+        background: var(--surface);
+      }
+
+      .pdf-actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .btn-icon {
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--muted);
+        font-size: 11px;
+        font-family: var(--font-mono);
+        padding: 3px 8px;
+        border-radius: 3px;
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+
+      .btn-icon:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+
+      #pdf-frame {
+        flex: 1;
+        width: 100%;
+        border: none;
+        background: #2a2a2a;
+      }
+
+      .pdf-placeholder {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        color: var(--muted);
+      }
+
+      .pdf-placeholder .icon {
+        font-size: 40px;
+        opacity: 0.3;
+      }
+
+      .pdf-placeholder p {
+        font-family: var(--font-mono);
+        font-size: 12px;
+      }
+
+      /* TOAST */
+      .toast {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 10px 16px;
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--text);
+        transform: translateY(80px);
+        opacity: 0;
+        transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .toast.show {
+        transform: translateY(0);
+        opacity: 1;
+      }
+
+      .toast.success {
+        border-color: var(--accent);
+      }
+      .toast.error {
+        border-color: var(--red);
+      }
+
+      /* RESIZER */
+      .resizer {
+        width: 4px;
+        background: var(--border);
+        cursor: col-resize;
+        transition: background 0.15s;
+        flex-shrink: 0;
+      }
+      .resizer:hover {
+        background: var(--accent);
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="logo">yaml<span>/</span>cv</div>
+      <div class="header-right">
+        <div class="status">
+          <div class="status-dot" id="status-dot"></div>
+          <span id="status-text">idle</span>
+        </div>
+        <button class="btn-save" id="btn-save" onclick="save()">
+          ⌘ Save & Build
+        </button>
+      </div>
+    </header>
+
+    <div class="split">
+      <div class="editor-pane" id="editor-pane">
+        <div class="pane-header">
+          <span class="pane-label">details.yml</span>
+          <select
+            class="template-select"
+            id="template-select"
+            onchange="loadTemplate()"
+          ></select>
+        </div>
+        <textarea
+          id="editor"
+          spellcheck="false"
+          placeholder="Loading..."
+        ></textarea>
+        <div class="unsaved-bar" id="unsaved-bar"></div>
+      </div>
+
+      <div class="resizer" id="resizer"></div>
+
+      <div class="preview-pane">
+        <div class="pane-header">
+          <span class="pane-label">PDF Preview</span>
+          <div class="pdf-actions">
+            <button class="btn-icon" onclick="refreshPDF()">↻ refresh</button>
+            <button class="btn-icon" onclick="downloadPDF()">↓ download</button>
+          </div>
+        </div>
+        <iframe id="pdf-frame" style="display: none"></iframe>
+        <div class="pdf-placeholder" id="pdf-placeholder">
+          <div class="icon">⬚</div>
+          <p>save to generate PDF</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+      let currentTemplate = "jake";
+      let unsaved = false;
+      let pdfCacheBust = Date.now();
+
+      // --- INIT ---
+      async function init() {
+        await loadTemplates();
+        await loadDetails();
+        await tryLoadPDF();
+      }
+
+      async function loadTemplates() {
+        const res = await fetch("/api/templates");
+        const templates = await res.json();
+        const sel = document.getElementById("template-select");
+        sel.innerHTML = templates
+          .map((t) => `<option value="${t}">${t}</option>`)
+          .join("");
+        currentTemplate = templates[0] || "jake";
+      }
+
+      async function loadTemplate() {
+        currentTemplate = document.getElementById("template-select").value;
+        await loadDetails();
+        await tryLoadPDF();
+      }
+
+      async function loadDetails() {
+        const res = await fetch(`/api/details?template=${currentTemplate}`);
+        if (res.ok) {
+          const text = await res.text();
+          document.getElementById("editor").value = text;
+          setUnsaved(false);
+        }
+      }
+
+      async function tryLoadPDF() {
+        const res = await fetch(
+          `/api/pdf?template=${currentTemplate}&v=${pdfCacheBust}`,
+        );
+        if (res.ok) {
+          showPDF(`/api/pdf?template=${currentTemplate}&v=${pdfCacheBust}`);
+        }
+      }
+
+      // --- SAVE & BUILD ---
+      async function save() {
+        const content = document.getElementById("editor").value;
+        setStatus("building", "building...");
+        document.getElementById("btn-save").disabled = true;
+
+        try {
+          const res = await fetch(`/api/save?template=${currentTemplate}`, {
+            method: "POST",
+            body: content,
+            headers: { "Content-Type": "text/plain" },
+          });
+
+          if (res.ok) {
+            setUnsaved(false);
+            toast("✓ Building PDF...", "success");
+            // poll for new PDF
+            pollPDF();
+          } else {
+            throw new Error("Save failed");
+          }
+        } catch (e) {
+          setStatus("error", "error");
+          toast("✗ Save failed", "error");
+        } finally {
+          document.getElementById("btn-save").disabled = false;
+        }
+      }
+
+      function pollPDF() {
+        let attempts = 0;
+        const interval = setInterval(async () => {
+          attempts++;
+          pdfCacheBust = Date.now();
+          const res = await fetch(
+            `/api/pdf?template=${currentTemplate}&v=${pdfCacheBust}`,
+          );
+          if (res.ok) {
+            clearInterval(interval);
+            showPDF(`/api/pdf?template=${currentTemplate}&v=${pdfCacheBust}`);
+            setStatus("ready", "ready");
+            toast("✓ PDF updated", "success");
+          }
+          if (attempts > 30) {
+            clearInterval(interval);
+            setStatus("error", "build failed");
+            toast("✗ Build failed — check terminal", "error");
+          }
+        }, 1000);
+      }
+
+      // --- PDF ---
+      function showPDF(url) {
+        const frame = document.getElementById("pdf-frame");
+        const placeholder = document.getElementById("pdf-placeholder");
+        frame.src = url;
+        frame.style.display = "block";
+        placeholder.style.display = "none";
+      }
+
+      function refreshPDF() {
+        pdfCacheBust = Date.now();
+        tryLoadPDF();
+      }
+
+      function downloadPDF() {
+        const a = document.createElement("a");
+        a.href = `/api/pdf?template=${currentTemplate}&v=${Date.now()}`;
+        a.download = `resume_${currentTemplate}.pdf`;
+        a.click();
+      }
+
+      // --- UI HELPERS ---
+      function setStatus(type, text) {
+        const dot = document.getElementById("status-dot");
+        const label = document.getElementById("status-text");
+        dot.className = `status-dot ${type}`;
+        label.textContent = text;
+      }
+
+      function setUnsaved(val) {
+        unsaved = val;
+        document.getElementById("unsaved-bar").classList.toggle("visible", val);
+      }
+
+      function toast(msg, type = "") {
+        const el = document.getElementById("toast");
+        el.textContent = msg;
+        el.className = `toast ${type} show`;
+        setTimeout(() => el.classList.remove("show"), 3000);
+      }
+
+      // --- EDITOR ---
+      document
+        .getElementById("editor")
+        .addEventListener("input", () => setUnsaved(true));
+
+      document.addEventListener("keydown", (e) => {
+        if ((e.metaKey || e.ctrlKey) && e.key === "s") {
+          e.preventDefault();
+          save();
+        }
+      });
+
+      // --- RESIZER ---
+      const resizer = document.getElementById("resizer");
+      const leftPane = document.getElementById("editor-pane");
+      let isResizing = false;
+
+      resizer.addEventListener("mousedown", () => {
+        isResizing = true;
+      });
+      document.addEventListener("mousemove", (e) => {
+        if (!isResizing) return;
+        const pct = (e.clientX / window.innerWidth) * 100;
+        if (pct > 20 && pct < 80) leftPane.style.width = pct + "%";
+      });
+      document.addEventListener("mouseup", () => {
+        isResizing = false;
+      });
+
+      init();
+    </script>
+  </body>
+</html>

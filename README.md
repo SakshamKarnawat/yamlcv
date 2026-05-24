@@ -25,7 +25,7 @@ curl -fsSL https://raw.githubusercontent.com/SakshamKarnawat/yamlcv/main/install
 
 1. `docker run -it --rm debian:bookworm-slim bash`
 2. `apt update && apt install -y curl git`
-3. `curl -fsSL https://raw.githubusercontent.com/SakshamKarnawat/yamlcv/main/install.sh?$(date +%s) | sh`
+3. `curl -fsSL https://raw.githubusercontent.com/SakshamKarnawat/yamlcv/main/install.sh?nocache=$(date +%s) | sh`
 4. `cd yamlcv`
 5. `uv run templates/jake/build.py`
 6. `ls generated/`
