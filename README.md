@@ -21,6 +21,12 @@ curl -fsSL https://raw.githubusercontent.com/SakshamKarnawat/yamlcv/main/install
   - Neovim: `vimtex` plugin
   - JetBrains: `TeXiFy IDEA` plugin
 
+## Test Steps
+
+1. `docker run -it --rm alpine:latest sh`
+2. `apk add curl git`
+3. `curl -fsSL https://raw.githubusercontent.com/SakshamKarnawat/yamlcv/main/install.sh | sh`
+
 ## Structure
 
 yamlcv/
