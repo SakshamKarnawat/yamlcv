@@ -25,7 +25,7 @@ if ! command -v latexmk > /dev/null 2>&1; then
   if command -v brew > /dev/null 2>&1; then
     brew install texlive
   elif command -v apt-get > /dev/null 2>&1; then
-    sudo apt-get install -y texlive-full
+    apt-get install -y texlive-full
   elif command -v apk > /dev/null 2>&1; then
     apk add texlive
   else

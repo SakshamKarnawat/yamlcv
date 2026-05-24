@@ -21,11 +21,14 @@ curl -fsSL https://raw.githubusercontent.com/SakshamKarnawat/yamlcv/main/install
   - Neovim: `vimtex` plugin
   - JetBrains: `TeXiFy IDEA` plugin
 
-## Test Steps
+## Testing Environment
 
-1. `docker run -it --rm alpine:latest sh`
-2. `apk add curl git`
-3. `curl -fsSL https://raw.githubusercontent.com/SakshamKarnawat/yamlcv/main/install.sh | sh`
+1. `docker run -it --rm debian:bookworm-slim bash`
+2. `apt update && apt install -y curl git`
+3. `curl -fsSL https://raw.githubusercontent.com/SakshamKarnawat/yamlcv/main/install.sh?$(date +%s) | sh`
+4. `cd yamlcv`
+5. `uv run templates/jake/build.py`
+6. `ls generated/`
 
 ## Structure
 
@@ -64,3 +67,9 @@ options:
 - `projects` section is optional — remove it from `details.yml` to exclude
 - To disable VS Code auto-rebuild on save: set `"latex-workshop.latex.autoBuild.run": "never"` in `settings.json`
 - To add a new template: create `templates/{name}/` with its own `details.yml` and `build.py`
+
+## TODO
+
+- Add a minimal Web UI that displays details.yml file on left side, and the generated PDF on the right side.
+- Add more customization through optional flags
+- Add support for more famous templates
