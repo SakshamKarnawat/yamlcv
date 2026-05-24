@@ -6,7 +6,7 @@ Edit one file. Get a professional PDF.
 ## Install
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/abc/yamlcv/main/install.sh | sh
+curl -fsSL https://github.com/SakshamKarnawat/yamlcv/blob/main/install.sh | sh
 ```
 
 ## Prerequisites & Assumptions

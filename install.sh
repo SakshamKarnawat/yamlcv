@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-REPO="https://github.com/abc/yamlcv"
+REPO="https://github.com/SakshamKarnawat/yamlcv"
 DEST="$HOME/yamlcv"
 
 echo "→ Installing yamlcv..."
