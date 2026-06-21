@@ -5,78 +5,60 @@ All the good templates I found online were formatted as LaTeX, which means I had
 As someone who is actively trying to use FOSS over enterprise software for almost everything, this didn't sit well with me.
 So here's yamlcv (looking for a better name :/)
 
-## Prerequisites
+> macOS and Linux ✅  · Windows support planned
 
-- macOS or Linux ✅ (Windows support planned)
+## Get started
 
-## Installation
+Edits save to `templates/jake/details.personal.yml` (auto-created from the sample on first run). PDF output: `generated/resume.pdf`.
 
-### Option 1 — Docker (easiest, no deps needed)
+Pick one:
 
-```bash
-git clone https://github.com/SakshamKarnawat/yamlcv
-cd yamlcv && docker compose up -d --build
-```
+| # | Setup | Interface | Local deps |
+|---|-------|-----------|------------|
+| 1 | Docker | Web UI | None |
+| 2 | Local install | Web UI | TeX Live + uv |
+| 3 | Local install | CLI watch | TeX Live + uv |
 
-Open `http://localhost:7878`
+**1. Docker — web UI**
 
-### Option 2 — Install script (recommended for local use)
+   ```bash
+   git clone https://github.com/SakshamKarnawat/yamlcv
+   cd yamlcv && docker compose up -d --build
+   # → http://localhost:7878
+   ```
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/SakshamKarnawat/yamlcv/main/install.sh | sh
-cd ~/yamlcv && uv run server.py
-```
+**2. Local — web UI**
 
-Installs `texlive` and `uv` automatically if missing.
+   ```bash
+   curl -fsSL https://raw.githubusercontent.com/SakshamKarnawat/yamlcv/main/install.sh | sh
+   cd ~/yamlcv && uv run server.py --details templates/jake/details.personal.yml
+   # → http://localhost:7878
+   ```
 
-### Option 3 — Manual
+**3. Local — CLI watch mode**
 
-```bash
-git clone https://github.com/SakshamKarnawat/yamlcv
-cd yamlcv
-brew install texlive        # mac
-# sudo apt install texlive-full  # linux
-curl -LsSf https://astral.sh/uv/install.sh | sh
-uv run server.py
-```
+   ```bash
+   curl -fsSL https://raw.githubusercontent.com/SakshamKarnawat/yamlcv/main/install.sh | sh
+   cd ~/yamlcv && uv run templates/jake/build.py --watch --details templates/jake/details.personal.yml
+   ```
 
-## Usage
-
-```bash
-cd ~/yamlcv
-
-# web UI (recommended)
-uv run server.py
-
-# CLI watch mode
-uv run templates/jake/build.py --watch
-```
-
-Open `templates/jake/details.yml` and fill in your info. PDF appears in `generated/`.
+Use `--details ~/path/to/my-resume.yml` to keep personal data outside the repo.
 
 ## Features
 
-- **Web UI** — split-pane form editor with live PDF preview and instant error feedback
-- **Watch mode** — CLI alternative that auto-rebuilds on every save
-- **Jake's template** — clean, ATS-friendly, widely recognized in SWE hiring
-- **Charter font** — serif, easy on the eyes, recruiter-friendly
-- **FontAwesome icons** — optional icons on contact links
-- **Page overflow warning** — alerts you if resume spills to 2 pages
-- **Optional sections** — projects, title, summary, website all optional
-- **Project links** — per-project demo and repo links
-- **Private details** — keep personal yml outside repo via `--details` flag
-- **YAML validation** — clear error shown before LaTeX even runs
+- Split-pane web editor with live PDF preview and instant error feedback
+- Jake template — clean, ATS-friendly, widely used in SWE hiring
+- Fonts: Charter, Lato, Inter, Source Sans Pro, Roboto, Outfit, Times
+- Reorder sections; optional title, summary, projects, contact fields
+- Experience and project links; bold/italic formatting in bullets
+- FontAwesome icons, colored links, page overflow warning
 
 ## Notes
 
-- Keep personal details outside repo: `uv run templates/jake/build.py --details ~/path/to/details.personal.yml`
+- Keep personal details outside the repo: `uv run server.py --details ~/path/to/details.personal.yml` or `uv run templates/jake/build.py --details ~/path/to/details.personal.yml`
 - To add a new template: create `templates/{name}/` with its own `details.yml`, `build.py`, and `schema.yml`
 - VS Code: disable auto-rebuild on save with `"latex-workshop.latex.autoBuild.run": "never"` in `.vscode/settings.json`
 
-## Roadmap
+## Planned work
 
-- More templates (McDowell, etc.)
-- More customization options
-- Proper attribution for templates and tooling used
-- Uninstall script with option to keep generated resume
-- Add .ttf import for users to allow custom fonts
+See [open issues](https://github.com/SakshamKarnawat/yamlcv/issues).
