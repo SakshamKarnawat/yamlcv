@@ -29,6 +29,22 @@ def escape(text):
         text = text.replace(char, replacement)
     return text
 
+_INLINE_RE = re.compile(r'\*\*(.+?)\*\*|\*(.+?)\*')
+
+def format_inline(text):
+    """Parse **bold** and *italic* markers into LaTeX."""
+    parts = []
+    last = 0
+    for m in _INLINE_RE.finditer(text):
+        parts.append(escape(text[last:m.start()]))
+        if m.group(1) is not None:
+            parts.append(rf'\textbf{{{escape(m.group(1))}}}')
+        else:
+            parts.append(rf'\textit{{{escape(m.group(2))}}}')
+        last = m.end()
+    parts.append(escape(text[last:]))
+    return ''.join(parts)
+
 def normalizeUrl(u):
     if not u:
         return ""
@@ -39,34 +55,53 @@ def normalizeUrl(u):
 def build_heading(h, opts):
     icons = opts.get('icons', True)
 
-    phone_icon   = r"\faPhone\ "      if icons else ""
-    email_icon   = r"\faEnvelope\ "   if icons else ""
-    li_icon      = r"\faLinkedin\ "   if icons else ""
-    gh_icon      = r"\faGithub\ "     if icons else ""
-    web_icon     = r"\faGlobe\ "      if icons else ""
+    contact_parts = []
+    if h.get('phone'):
+        icon = r"\faPhone\ " if icons else ""
+        phone = h['phone']
+        contact_parts.append(
+            f"{icon}\\href{{tel:{phone}}}{{\\underline{{{escape(phone)}}}}}"
+        )
+    if h.get('email'):
+        icon = r"\faEnvelope\ " if icons else ""
+        email = h['email']
+        contact_parts.append(
+            f"{icon}\\href{{mailto:{email}}}{{\\underline{{{escape(email)}}}}}"
+        )
+    if h.get('linkedin'):
+        icon = r"\faLinkedin\ " if icons else ""
+        linkedin = normalizeUrl(h['linkedin'])
+        label = linkedin.rstrip('/').split('/')[-1]
+        contact_parts.append(
+            f"{icon}\\href{{{linkedin}}}{{\\underline{{{escape(label)}}}}}"
+        )
+    if h.get('github'):
+        icon = r"\faGithub\ " if icons else ""
+        github = normalizeUrl(h['github'])
+        label = github.rstrip('/').split('/')[-1]
+        contact_parts.append(
+            f"{icon}\\href{{{github}}}{{\\underline{{{escape(label)}}}}}"
+        )
+    if h.get('website'):
+        icon = r"\faGlobe\ " if icons else ""
+        website = normalizeUrl(h['website'])
+        contact_parts.append(
+            f"{icon}\\href{{{website}}}{{\\underline{{{escape(website)}}}}}"
+        )
 
-    phone = h.get('phone', '')
-    email = h.get('email', '')
-    linkedin = normalizeUrl(h.get('linkedin', ''))
-    github = normalizeUrl(h.get('github', ''))
-    website = normalizeUrl(h.get('website', ''))
-
-    linkedin_label = linkedin.rstrip('/').split('/')[-1] if linkedin else ''
-    github_label   = github.rstrip('/').split('/')[-1] if github else ''
-
-    links = (
-        f"{phone_icon}\\href{{tel:{phone}}}{{\\underline{{{escape(phone)}}}}} $|$ "
-        f"{email_icon}\\href{{mailto:{email}}}{{\\underline{{{escape(email)}}}}} $|$ "
-        f"{li_icon}\\href{{{linkedin}}}{{\\underline{{{escape(linkedin_label)}}}}} $|$ "
-        f"{gh_icon}\\href{{{github}}}{{\\underline{{{escape(github_label)}}}}}"
-    )
-
-    if website:
-        links += rf" $|$ {web_icon}\href{{{website}}}{{\underline{{{escape(website)}}}}}"
+    contact_line = ""
+    if contact_parts:
+        contact_line = rf" \\ \vspace{{4pt}}\small {" $|$ ".join(contact_parts)}"
 
     title_line = ""
     if h.get('title'):
-        title_line = rf"\\ \vspace{{2pt}}\large\textit{{{escape(h['title'])}}}"
+        size = opts.get('title_size', 'medium')
+        size_cmd = {
+            'small': r'\small\textit',
+            'medium': r'\large\textit',
+            'large': r'\Large\textit',
+        }.get(size, r'\large\textit')
+        title_line = rf"\\ \vspace{{2pt}}{size_cmd}{{{escape(h['title'])}}}"
 
     summary_line = ""
     if h.get('summary'):
@@ -74,8 +109,7 @@ def build_heading(h, opts):
 
     return rf"""
 \begin{{center}}
-    \textbf{{\Huge \scshape {escape(h['name'])}}} {title_line}{summary_line} \\ \vspace{{4pt}}
-    \small {links}
+    \textbf{{\Huge \scshape {escape(h['name'])}}} {title_line}{summary_line}{contact_line}
 \end{{center}}
 """
 
@@ -96,12 +130,38 @@ def build_experience(exp_list):
     items = ""
     for e in exp_list:
         bullets = "\n".join(
-            rf"        \resumeItem{{{escape(b)}}}" for b in e['bullets']
+            rf"        \resumeItem{{{format_inline(b)}}}" for b in e['bullets']
         )
+
+        link_parts = []
+        for link in e.get('links') or []:
+            url = normalizeUrl(link.get('url', ''))
+            if not url:
+                continue
+            label = link.get('text') or url
+            link_parts.append(
+                rf"\href[pdfnewwindow=true]{{{url}}}{{\underline{{{escape(label)}}}}}"
+            )
+
+        rows = [
+            rf"      \textbf{{{escape(e['title'])}}} & {escape(e.get('dates', ''))} \\",
+        ]
+        company = e.get('company', '')
+        location = e.get('location', '')
+        if company or location:
+            rows.append(
+                rf"      \textit{{\small {escape(company)}}} & \textit{{\small {escape(location)}}} \\"
+            )
+        if link_parts:
+            rows.append(
+                rf"      \textit{{\small Projects: {" $|$ ".join(link_parts)}}} & \\"
+            )
+
         items += rf"""
-    \resumeSubheading
-      {{{escape(e['title'])}}}{{{escape(e['dates'])}}}
-      {{{escape(e['company'])}}}{{{escape(e['location'])}}}
+    \vspace{{-2pt}}\item
+    \begin{{tabular*}}{{0.97\textwidth}}[t]{{l@{{\extracolsep{{\fill}}}}r}}
+{chr(10).join(rows)}
+    \end{{tabular*}}\vspace{{-7pt}}
       \resumeItemListStart
 {bullets}
       \resumeItemListEnd
@@ -116,7 +176,7 @@ def build_projects(proj_list):
     items = ""
     for p in proj_list:
         bullets = "\n".join(
-            rf"        \resumeItem{{{escape(b)}}}" for b in p['bullets']
+            rf"        \resumeItem{{{format_inline(b)}}}" for b in p['bullets']
         )
 
         # build links line separately
@@ -166,6 +226,7 @@ def build_skills(skills):
 def build_preamble(opts):
     font = opts.get('font', 'charter')
     color_links = opts.get('color_links', False)
+    xelatex = font == 'outfit'
 
     font_pkg = ""
     if font == "charter":
@@ -174,10 +235,29 @@ def build_preamble(opts):
         font_pkg = r"\usepackage{times}"
     elif font == "lato":
         font_pkg = r"\usepackage[default]{lato}"
+    elif font == "inter":
+        font_pkg = r"\usepackage[sfdefault]{inter}"
+    elif font == "sourcesanspro":
+        font_pkg = r"\usepackage[default]{sourcesanspro}"
+    elif font == "roboto":
+        font_pkg = r"\usepackage[sfdefault]{roboto}"
+    elif font == "outfit":
+        font_pkg = r"""\usepackage{fontspec}
+\setmainfont{Outfit}[
+  Path=../templates/jake/fonts/,
+  UprightFont={Outfit-Variable.ttf},
+  BoldFont={Outfit-Variable.ttf},
+  UprightFeatures={RawFeature={+wght=400}},
+  BoldFeatures={RawFeature={+wght=600}},
+]"""
     # default = computer modern, no package needed
 
-    hyperref = r"\usepackage[hidelinks]{hyperref}" if not color_links else \
-               r"\usepackage[colorlinks=true,urlcolor=blue]{hyperref}"
+    glyphtounicode = "" if xelatex else r"\input{glyphtounicode}"
+
+    hyperref = r"\usepackage[hidelinks]{hyperref}"
+    if color_links:
+        hyperref = r"""\definecolor{softlink}{RGB}{29, 78, 216}
+\usepackage[colorlinks=true,linkcolor=softlink,urlcolor=softlink]{hyperref}"""
 
     return rf"""\documentclass[letterpaper,11pt]{{article}}
 
@@ -193,7 +273,7 @@ def build_preamble(opts):
 \usepackage[english]{{babel}}
 \usepackage{{tabularx}}
 \usepackage{{fontawesome5}}
-\input{{glyphtounicode}}
+{glyphtounicode}
 {font_pkg}
 
 \pagestyle{{fancy}}
@@ -285,14 +365,14 @@ def main():
 
     opts = data.get('options', {})
 
-    uses_fontspec = opts.get('font', '') in ('inter', 'calibri', 'meslo')
+    uses_fontspec = opts.get('font', '') == 'outfit'
     latex_engine = "xelatex" if uses_fontspec else "pdflatex"
 
     tex = build_preamble(opts)
     tex += "\n\\begin{document}\n"
     tex += build_heading(data['heading'], opts)
-    tex += build_education(data['education'])
     tex += build_experience(data['experience'])
+    tex += build_education(data['education'])
     if data.get('projects'):
         tex += build_projects(data['projects'])
     tex += build_skills(data['skills'])

@@ -456,6 +456,24 @@
         color: var(--red);
       }
 
+      /* LINKS */
+      .links-list {
+        margin-bottom: 6px;
+      }
+      .link-row {
+        display: flex;
+        gap: 6px;
+        margin-bottom: 6px;
+        align-items: center;
+      }
+      .link-row .link-text {
+        width: 35%;
+        flex-shrink: 0;
+      }
+      .link-row .link-url {
+        flex: 1;
+      }
+
       /* KEYVALUE (skills) */
       .kv-row {
         display: flex;
@@ -917,8 +935,11 @@
         entryBody.dataset.sectionKey = sec.key;
 
         // group non-bullet fields in two-col where sensible
-        const regularFields = sec.fields.filter((f) => f.type !== "bullets");
+        const regularFields = sec.fields.filter(
+          (f) => f.type !== "bullets" && f.type !== "links",
+        );
         const bulletField = sec.fields.find((f) => f.type === "bullets");
+        const linkField = sec.fields.find((f) => f.type === "links");
 
         const grid = document.createElement("div");
         grid.className = "two-col";
@@ -942,6 +963,14 @@
 
         if (grid.children.length > 0 && !entryBody.contains(grid)) {
           entryBody.appendChild(grid);
+        }
+
+        if (linkField) {
+          const linksEl = buildLinksField(
+            linkField,
+            data[linkField.key] || [],
+          );
+          entryBody.appendChild(linksEl);
         }
 
         if (bulletField) {
@@ -1008,7 +1037,7 @@
       function buildBulletsField(field, bullets, sectionKey) {
         const wrapper = document.createElement("div");
         wrapper.className = "field-row";
-        wrapper.innerHTML = `<label class="field-label">${field.label}<span class="field-required">*</span></label>`;
+        wrapper.innerHTML = `<label class="field-label">${field.label}<span class="field-required">*</span>${field.hint ? `<span class="field-hint">${field.hint}</span>` : ""}</label>`;
 
         const list = document.createElement("div");
         list.className = "bullets-list";
@@ -1018,6 +1047,8 @@
           row.className = "bullet-row";
           row.innerHTML = `
       <input type="text" placeholder="${field.placeholder}" value="${escHtml(val)}" oninput="setUnsaved(true)">
+      <button class="btn-entry btn-up" onclick="moveBullet(this,'up')" title="move up">↑</button>
+      <button class="btn-entry btn-down" onclick="moveBullet(this,'down')" title="move down">↓</button>
       <button class="btn-bullet-remove" onclick="this.parentElement.remove(); setUnsaved(true)" title="remove">✕</button>`;
           list.appendChild(row);
         };
@@ -1033,6 +1064,42 @@
         addBtn.style.marginTop = "4px";
         addBtn.onclick = () => {
           addBullet("");
+          setUnsaved(true);
+        };
+        wrapper.appendChild(addBtn);
+        return wrapper;
+      }
+
+      function buildLinksField(field, links) {
+        const wrapper = document.createElement("div");
+        wrapper.className = "field-row";
+        wrapper.innerHTML = `<label class="field-label">${field.label}${field.hint ? `<span class="field-hint">${field.hint}</span>` : ""}</label>`;
+
+        const list = document.createElement("div");
+        list.className = "links-list";
+
+        const addLink = (data) => {
+          const row = document.createElement("div");
+          row.className = "link-row";
+          row.innerHTML = `
+      <input type="text" class="link-text" placeholder="${field.placeholder_text || "Label"}" value="${escHtml(data?.text || "")}" oninput="setUnsaved(true)">
+      <input type="text" class="link-url" placeholder="${field.placeholder_url || "https://..."}" value="${escHtml(data?.url || "")}" oninput="setUnsaved(true)">
+      <button class="btn-entry btn-up" onclick="moveLink(this,'up')" title="move up">↑</button>
+      <button class="btn-entry btn-down" onclick="moveLink(this,'down')" title="move down">↓</button>
+      <button class="btn-bullet-remove" onclick="this.parentElement.remove(); setUnsaved(true)" title="remove">✕</button>`;
+          list.appendChild(row);
+        };
+
+        if (links.length > 0) links.forEach((l) => addLink(l));
+
+        wrapper.appendChild(list);
+
+        const addBtn = document.createElement("button");
+        addBtn.className = "btn-add";
+        addBtn.textContent = "+ add link";
+        addBtn.style.marginTop = "4px";
+        addBtn.onclick = () => {
+          addLink({});
           setUnsaved(true);
         };
         wrapper.appendChild(addBtn);
@@ -1091,6 +1158,14 @@
                     .map((i) => i.value.trim())
                     .filter(Boolean);
                   if (bullets.length) obj[f.key] = bullets;
+                } else if (f.type === "links") {
+                  const links = [...body.querySelectorAll(".link-row")]
+                    .map((row) => ({
+                      text: row.querySelector(".link-text").value.trim(),
+                      url: row.querySelector(".link-url").value.trim(),
+                    }))
+                    .filter((l) => l.url);
+                  if (links.length) obj[f.key] = links;
                 } else {
                   const inputs = body.querySelectorAll(
                     'input[type="text"], input[type="email"], textarea',
@@ -1222,6 +1297,133 @@
         setUnsaved(true);
       }
 
+      function moveBullet(btn, dir) {
+        const row = btn.closest(".bullet-row");
+        const container = row.parentElement;
+        if (dir === "up" && row.previousElementSibling) {
+          container.insertBefore(row, row.previousElementSibling);
+        } else if (dir === "down" && row.nextElementSibling) {
+          container.insertBefore(row.nextElementSibling, row);
+        }
+        setUnsaved(true);
+      }
+
+      function moveLink(btn, dir) {
+        const row = btn.closest(".link-row");
+        const container = row.parentElement;
+        if (dir === "up" && row.previousElementSibling) {
+          container.insertBefore(row, row.previousElementSibling);
+        } else if (dir === "down" && row.nextElementSibling) {
+          container.insertBefore(row.nextElementSibling, row);
+        }
+        setUnsaved(true);
+      }
+
+      function findEnclosingFormat(val, selStart, selEnd, marker) {
+        const len = marker.length;
+        if (marker === "**") {
+          let open = -1;
+          for (let i = selStart; i >= 0; i--) {
+            if (val.slice(i, i + 2) === "**") {
+              open = i;
+              break;
+            }
+          }
+          if (open === -1) return null;
+          const searchFrom = Math.max(open + 2, selEnd);
+          let close = -1;
+          for (let i = searchFrom; i <= val.length - 2; i++) {
+            if (val.slice(i, i + 2) === "**") {
+              close = i;
+              break;
+            }
+          }
+          if (close === -1) return null;
+          const innerStart = open + 2;
+          const innerEnd = close;
+          if (selStart >= innerStart && selEnd <= innerEnd) {
+            return { open, close, innerStart, innerEnd };
+          }
+          return null;
+        }
+
+        let open = -1;
+        for (let i = selStart; i >= 0; i--) {
+          if (val[i] === "*" && val[i - 1] !== "*" && val[i + 1] !== "*") {
+            open = i;
+            break;
+          }
+        }
+        if (open === -1) return null;
+        const searchFrom = Math.max(open + 1, selEnd);
+        let close = -1;
+        for (let i = searchFrom; i < val.length; i++) {
+          if (val[i] === "*" && val[i - 1] !== "*" && val[i + 1] !== "*") {
+            close = i;
+            break;
+          }
+        }
+        if (close === -1) return null;
+        const innerStart = open + 1;
+        const innerEnd = close;
+        if (selStart >= innerStart && selEnd <= innerEnd) {
+          return { open, close, innerStart, innerEnd };
+        }
+        return null;
+      }
+
+      function wrapBulletFormat(input, marker) {
+        const start = input.selectionStart;
+        const end = input.selectionEnd;
+        const val = input.value;
+        const len = marker.length;
+        const selected = val.slice(start, end);
+
+        let bounds = null;
+
+        if (
+          selected.length >= 2 * len &&
+          selected.startsWith(marker) &&
+          selected.endsWith(marker)
+        ) {
+          bounds = {
+            open: start,
+            close: end - len,
+            innerStart: start + len,
+            innerEnd: end - len,
+          };
+        } else if (
+          val.slice(start - len, start) === marker &&
+          val.slice(end, end + len) === marker
+        ) {
+          bounds = { open: start - len, close: end, innerStart: start, innerEnd: end };
+        } else {
+          bounds = findEnclosingFormat(val, start, end, marker);
+        }
+
+        if (bounds) {
+          const inner = val.slice(bounds.innerStart, bounds.innerEnd);
+          input.value =
+            val.slice(0, bounds.open) + inner + val.slice(bounds.close + len);
+          if (start === end) {
+            const cursor = bounds.open + (start - bounds.innerStart);
+            input.selectionStart = input.selectionEnd = cursor;
+          } else {
+            input.selectionStart = bounds.open;
+            input.selectionEnd = bounds.open + inner.length;
+          }
+        } else if (start === end) {
+          input.value = val.slice(0, start) + marker + marker + val.slice(end);
+          input.selectionStart = input.selectionEnd = start + len;
+        } else {
+          input.value =
+            val.slice(0, start) + marker + selected + marker + val.slice(end);
+          input.selectionStart = start;
+          input.selectionEnd = end + 2 * len;
+        }
+        setUnsaved(true);
+      }
+
       function showError(msg) {
         const el = document.getElementById("error-banner");
         el.textContent = msg;
@@ -1265,9 +1467,21 @@
 
       // ── KEYBOARD ──────────────────────────────────────────
       document.addEventListener("keydown", (e) => {
-        if ((e.metaKey || e.ctrlKey) && e.key === "s") {
-          e.preventDefault();
-          save();
+        if (e.metaKey || e.ctrlKey) {
+          if (e.key === "s") {
+            e.preventDefault();
+            save();
+            return;
+          }
+          const input = e.target;
+          if (
+            input.tagName === "INPUT" &&
+            input.closest(".bullet-row") &&
+            (e.key === "b" || e.key === "B" || e.key === "i" || e.key === "I")
+          ) {
+            e.preventDefault();
+            wrapBulletFormat(input, e.key.toLowerCase() === "b" ? "**" : "*");
+          }
         }
       });
 

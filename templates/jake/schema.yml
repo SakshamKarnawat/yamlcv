@@ -18,6 +18,14 @@ options:
         label: "Times New Roman (serif)"
       - value: "lato"
         label: "Lato (sans-serif)"
+      - value: "inter"
+        label: "Inter (sans-serif)"
+      - value: "sourcesanspro"
+        label: "Source Sans Pro (sans-serif)"
+      - value: "roboto"
+        label: "Roboto (sans-serif)"
+      - value: "outfit"
+        label: "Outfit (sans-serif)"
       - value: "default"
         label: "Default (Computer Modern)"
     default: "charter"
@@ -26,6 +34,18 @@ options:
     label: "Colored links"
     type: toggle
     default: false
+
+  - key: title_size
+    label: "Title size"
+    type: select
+    options:
+      - value: "small"
+        label: "Small"
+      - value: "medium"
+        label: "Medium (default)"
+      - value: "large"
+        label: "Large"
+    default: "medium"
 
 sections:
   - key: heading
@@ -41,26 +61,30 @@ sections:
       - key: phone
         label: "Phone"
         type: text
-        required: true
+        required: false
         placeholder: "123-456-7890"
+        hint: "optional"
 
       - key: email
         label: "Email"
         type: email
-        required: true
+        required: false
         placeholder: "jake@example.com"
+        hint: "optional"
 
       - key: linkedin
         label: "LinkedIn"
         type: text
-        required: true
+        required: false
         placeholder: "linkedin.com/in/jakeryan"
+        hint: "optional"
 
       - key: github
         label: "GitHub"
         type: text
-        required: true
+        required: false
         placeholder: "github.com/jakeryan"
+        hint: "optional"
 
       - key: website
         label: "Website"
@@ -81,6 +105,53 @@ sections:
         required: false
         placeholder: "5+ years building scalable backend systems..."
         hint: "optional — 1-2 lines max"
+
+  - key: experience
+    label: "Experience"
+    type: list
+    min: 1
+    fields:
+      - key: title
+        label: "Job Title"
+        type: text
+        required: true
+        placeholder: "Software Engineer"
+
+      - key: company
+        label: "Company"
+        type: text
+        required: false
+        placeholder: "Acme Corp"
+        hint: "optional"
+
+      - key: location
+        label: "Location"
+        type: text
+        required: false
+        placeholder: "San Francisco, CA"
+        hint: "optional"
+
+      - key: dates
+        label: "Dates"
+        type: text
+        required: true
+        placeholder: "Jan. 2022 -- Present"
+
+      - key: links
+        label: "Projects"
+        type: links
+        required: false
+        hint: "optional — related projects with live links"
+        placeholder_text: "Project name"
+        placeholder_url: "https://yourproject.com"
+
+      - key: bullets
+        label: "Bullet Points"
+        type: bullets
+        required: true
+        min: 1
+        placeholder: "Did X using Y resulting in Z impact"
+        hint: "⌘/Ctrl+B bold, ⌘/Ctrl+I italic"
 
   - key: education
     label: "Education"
@@ -110,42 +181,6 @@ sections:
         type: text
         required: true
         placeholder: "Aug. 2015 -- May 2019"
-
-  - key: experience
-    label: "Experience"
-    type: list
-    min: 1
-    fields:
-      - key: title
-        label: "Job Title"
-        type: text
-        required: true
-        placeholder: "Software Engineer"
-
-      - key: company
-        label: "Company"
-        type: text
-        required: true
-        placeholder: "Acme Corp"
-
-      - key: location
-        label: "Location"
-        type: text
-        required: true
-        placeholder: "San Francisco, CA"
-
-      - key: dates
-        label: "Dates"
-        type: text
-        required: true
-        placeholder: "Jan. 2022 -- Present"
-
-      - key: bullets
-        label: "Bullet Points"
-        type: bullets
-        required: true
-        min: 1
-        placeholder: "Did X using Y resulting in Z impact"
 
   - key: projects
     label: "Projects"
