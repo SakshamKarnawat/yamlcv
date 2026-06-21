@@ -3,13 +3,14 @@
 # dependencies = ["pyyaml", "watchdog"]
 # ///
 """
-build.py — generates resume_{name}.tex from details.yml
-Usage:       uv run templates/jake/build.py
-Watch mode:  uv run templates/jake/build.py --watch
+build.py — generates resume.tex from details YAML
+Usage:       uv run templates/jake/build.py --details templates/jake/details.personal.yml
+Watch mode:  uv run templates/jake/build.py --watch --details templates/jake/details.personal.yml
 """
 
 import yaml
 import os
+import shutil
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import time
@@ -414,20 +415,45 @@ def main():
 
     print("✓ PDF build triggered")
 
+def ensure_details_file(details_path):
+    if os.path.exists(details_path):
+        return
+    default = os.path.join(os.path.dirname(details_path), "details.yml")
+    if os.path.exists(default):
+        os.makedirs(os.path.dirname(details_path), exist_ok=True)
+        shutil.copy(default, details_path)
+        print(f"→ Created {details_path} from {default}")
+
 class YMLHandler(FileSystemEventHandler):
+    def __init__(self, details_path):
+        self.details_path = os.path.abspath(details_path)
+
     def on_modified(self, event):
-        if event.src_path.endswith("details.yml"):
-            print("↻ details.yml changed, rebuilding...")
+        if os.path.abspath(event.src_path) == self.details_path:
+            print(f"↻ {os.path.basename(self.details_path)} changed, rebuilding...")
             main()
 
 if __name__ == "__main__":
-    if "--watch" in sys.argv:
-        script_dir = os.path.dirname(os.path.abspath(__file__))
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--details', default=None)
+    parser.add_argument('--watch', action='store_true')
+    args, _ = parser.parse_known_args()
+
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    details_path = os.path.abspath(
+        args.details if args.details else os.path.join(script_dir, "details.yml")
+    )
+
+    if args.details:
+        ensure_details_file(details_path)
+
+    if args.watch:
+        watch_dir = os.path.dirname(details_path)
         observer = Observer()
-        observer.schedule(YMLHandler(), path=script_dir, recursive=False)
+        observer.schedule(YMLHandler(details_path), path=watch_dir, recursive=False)
         observer.start()
-        print("👀 Watching details.yml... (Ctrl+C to stop)")
-        main()  # build once on start
+        print(f"👀 Watching {details_path}... (Ctrl+C to stop)")
+        main()
         try:
             while True:
                 time.sleep(1)

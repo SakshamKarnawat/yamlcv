@@ -58,11 +58,11 @@ experience:
       - Built and delivered 4 full-stack web apps for small business clients using React and Node.js
       - Set up automated deployment pipelines on AWS reducing client deployment time from hours to minutes
 projects:
-  - name: ResumeCraft
+  - name: ResumeKit
     stack: Python, LaTeX, YAML, watchdog
     dates: Jan. 2024 -- Present
-    demo: https://yourproject.com
-    repo: github.com/you/project
+    demo: https://github.com/SakshamKarnawat/ResumeKit
+    repo: github.com/SakshamKarnawat/ResumeKit
     bullets:
       - Built YAML-driven LaTeX resume generator with live watch mode and auto PDF compilation
       - Supports multiple templates, optional sections, FontAwesome icons, and custom fonts

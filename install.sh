@@ -1,10 +1,10 @@
 #!/bin/sh
 set -e
 
-REPO="https://github.com/SakshamKarnawat/yamlcv"
-DEST="$HOME/yamlcv"
+REPO="https://github.com/SakshamKarnawat/ResumeKit"
+DEST="$HOME/ResumeKit"
 
-echo "→ Installing yamlcv..."
+echo "→ Installing ResumeKit..."
 
 # Check git
 if ! command -v git > /dev/null 2>&1; then
@@ -38,24 +38,24 @@ fi
 
 # Clone repo
 if [ -d "$DEST" ]; then
-  echo "→ yamlcv already exists, pulling latest..."
+  echo "→ ResumeKit already exists, pulling latest..."
   git -C "$DEST" pull
 else
   git clone "$REPO" "$DEST"
 fi
 
 echo ""
-echo "✓ yamlcv installed at $DEST"
+echo "✓ ResumeKit installed at $DEST"
 echo ""
 echo "⚠️  If uv was just installed, run this first:"
 echo "  . \$HOME/.local/bin/env"
 echo ""
 echo "Next steps:"
 echo "  Option A — Web UI (recommended):"
-echo "    cd $DEST && uv run server.py"
+echo "    cd $DEST && uv run server.py --details templates/jake/details.personal.yml"
 echo ""
 echo "  Option B — CLI watch mode:"
-echo "    Edit details in $DEST/templates/jake/details.yml"
-echo "    cd $DEST && uv run templates/jake/build.py --watch"
+echo "    cd $DEST && uv run templates/jake/build.py --watch --details templates/jake/details.personal.yml"
 echo ""
+echo "  Edits save to: $DEST/templates/jake/details.personal.yml"
 echo "  PDF appears in: $DEST/generated/"

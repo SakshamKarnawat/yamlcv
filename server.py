@@ -3,7 +3,7 @@
 # dependencies = ["pyyaml", "watchdog"]
 # ///
 """
-server.py — local web UI for yamlcv
+server.py — local web UI for ResumeKit
 Usage: uv run server.py
 Opens browser at http://localhost:7878
 """
@@ -167,7 +167,7 @@ if __name__ == "__main__":
 
     PORT = args.port
     server = http.server.HTTPServer(("0.0.0.0", PORT), Handler)
-    print(f"→ yamlcv UI running at http://localhost:{PORT}", flush=True)
+    print(f"→ ResumeKit UI running at http://localhost:{PORT}", flush=True)
     if args.details:
         print(f"→ using details: {args.details}", flush=True)
     print("  Ctrl+C to stop", flush=True)

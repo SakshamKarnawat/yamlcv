@@ -1,8 +1,8 @@
-# yamlcv
+# ResumeKit
 
 This project started because I wanted to build a better resume. All the good templates I found online were formatted as LaTeX, which means I had to use Overleaf.
 
-As someone who is actively trying to use FOSS over enterprise software for almost everything, this didn't sit well with me. So here's yamlcv (looking for a better name)
+As someone who is actively trying to use FOSS over enterprise software for almost everything, this didn't sit well with me. So here's ResumeKit.
 
 > macOS and Linux ✅  · Windows support planned
 
@@ -21,24 +21,24 @@ Pick one:
 **1. Docker — web UI**
 
    ```bash
-   git clone https://github.com/SakshamKarnawat/yamlcv
-   cd yamlcv && docker compose up -d --build
+   git clone https://github.com/SakshamKarnawat/ResumeKit
+   cd ResumeKit && docker compose up -d --build
    # → http://localhost:7878
    ```
 
 **2. Local — web UI**
 
    ```bash
-   curl -fsSL https://raw.githubusercontent.com/SakshamKarnawat/yamlcv/main/install.sh | sh
-   cd ~/yamlcv && uv run server.py --details templates/jake/details.personal.yml
+   curl -fsSL https://raw.githubusercontent.com/SakshamKarnawat/ResumeKit/main/install.sh | sh
+   cd ~/ResumeKit && uv run server.py --details templates/jake/details.personal.yml
    # → http://localhost:7878
    ```
 
 **3. Local — CLI watch mode**
 
    ```bash
-   curl -fsSL https://raw.githubusercontent.com/SakshamKarnawat/yamlcv/main/install.sh | sh
-   cd ~/yamlcv && uv run templates/jake/build.py --watch --details templates/jake/details.personal.yml
+   curl -fsSL https://raw.githubusercontent.com/SakshamKarnawat/ResumeKit/main/install.sh | sh
+   cd ~/ResumeKit && uv run templates/jake/build.py --watch --details templates/jake/details.personal.yml
    ```
 
 Use `--details ~/path/to/my-resume.yml` to keep personal data outside the repo.
@@ -60,4 +60,4 @@ Use `--details ~/path/to/my-resume.yml` to keep personal data outside the repo.
 
 ## Planned work
 
-See [open issues](https://github.com/SakshamKarnawat/yamlcv/issues).
+See [open issues](https://github.com/SakshamKarnawat/ResumeKit/issues).

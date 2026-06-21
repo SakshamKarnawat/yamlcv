@@ -1,5 +1,5 @@
 services:
-  yamlcv:
+  resumekit:
     build: .
     ports:
       - "7878:7878"

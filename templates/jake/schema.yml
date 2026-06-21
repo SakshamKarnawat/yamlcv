@@ -192,7 +192,7 @@ sections:
         label: "Project Name"
         type: text
         required: true
-        placeholder: "ResumeCraft"
+        placeholder: "ResumeKit"
 
       - key: stack
         label: "Tech Stack"
