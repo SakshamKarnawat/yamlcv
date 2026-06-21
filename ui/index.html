@@ -209,6 +209,12 @@
         background: var(--accent-dim);
       }
 
+      .section-actions {
+        display: flex;
+        gap: 6px;
+        margin-right: 6px;
+      }
+
       .section-title {
         font-family: var(--font-mono);
         font-size: 11px;
@@ -511,6 +517,24 @@
         opacity: 1;
       }
 
+      .template-attribution {
+        flex-shrink: 0;
+        padding: 10px 16px 12px;
+        border-top: 1px solid var(--border);
+        font-family: var(--font-mono);
+        font-size: 10px;
+        line-height: 1.55;
+        color: var(--muted);
+      }
+      .template-attribution a {
+        color: var(--text2);
+        text-decoration: none;
+      }
+      .template-attribution a:hover {
+        color: var(--accent);
+        text-decoration: underline;
+      }
+
       /* RESIZER */
       .resizer {
         width: 4px;
@@ -678,6 +702,7 @@
           ></select>
         </div>
         <div class="form-scroll" id="form-scroll"></div>
+        <div class="template-attribution" id="template-attribution"></div>
         <div class="unsaved-bar" id="unsaved-bar"></div>
       </div>
 
@@ -710,6 +735,29 @@
       let formData = {};
       let pdfCacheBust = Date.now();
 
+      const TEMPLATE_ATTRIBUTIONS = {
+        jake: {
+          name: "Jake's Resume",
+          author: "Jake Gutierrez",
+          authorUrl: "https://github.com/jakegut/resume",
+          license: "MIT",
+          basedOn: {
+            name: "sb2nov/resume",
+            url: "https://github.com/sb2nov/resume",
+          },
+        },
+      };
+
+      function updateTemplateAttribution() {
+        const el = document.getElementById("template-attribution");
+        const attr = TEMPLATE_ATTRIBUTIONS[currentTemplate];
+        if (!attr) {
+          el.innerHTML = "";
+          return;
+        }
+        el.innerHTML = `Template: <a href="${attr.authorUrl}" target="_blank" rel="noopener noreferrer">${attr.name}</a> (${attr.license}) · <a href="${attr.authorUrl}" target="_blank" rel="noopener noreferrer">${attr.author}</a> · based on <a href="${attr.basedOn.url}" target="_blank" rel="noopener noreferrer">${attr.basedOn.name}</a>`;
+      }
+
       // ── INIT ──────────────────────────────────────────────
       async function init() {
         await loadTemplates();
@@ -725,10 +773,12 @@
           .map((t) => `<option value="${t}">${t}</option>`)
           .join("");
         currentTemplate = templates[0] || "jake";
+        updateTemplateAttribution();
       }
 
       async function loadTemplate() {
         currentTemplate = document.getElementById("template-select").value;
+        updateTemplateAttribution();
         await loadSchemaAndDetails();
         await tryLoadPDF();
       }
@@ -763,10 +813,27 @@
         container.appendChild(optBlock);
 
         // SECTIONS
-        schema.sections.forEach((sec) => {
-          const block = buildSectionBlock(sec);
-          container.appendChild(block);
+        const headingSec = schema.sections.find((s) => s.key === "heading");
+        if (headingSec) container.appendChild(buildSectionBlock(headingSec));
+
+        getSectionOrder().forEach((key) => {
+          if (key === "heading") return;
+          const sec = schema.sections.find((s) => s.key === key);
+          if (sec) container.appendChild(buildSectionBlock(sec));
         });
+      }
+
+      function getSectionOrder() {
+        const defaultOrder = schema.sections
+          .map((s) => s.key)
+          .filter((k) => k !== "heading");
+        const saved = formData.options?.section_order;
+        if (!saved?.length) return defaultOrder;
+        const ordered = saved.filter((k) => defaultOrder.includes(k));
+        defaultOrder.forEach((k) => {
+          if (!ordered.includes(k)) ordered.push(k);
+        });
+        return ordered;
       }
 
       function buildOptionsBlock() {
@@ -834,11 +901,19 @@
 
         const header = document.createElement("div");
         header.className = "section-header";
+        const reorderBtns =
+          sec.key !== "heading"
+            ? `<div class="section-actions">
+      <button class="btn-entry btn-up" onclick="event.stopPropagation(); moveSection(this,'up')" title="move up">↑</button>
+      <button class="btn-entry btn-down" onclick="event.stopPropagation(); moveSection(this,'down')" title="move down">↓</button>
+    </div>`
+            : "";
         header.innerHTML = `
     <span class="section-title">
       ${sec.label}
       ${isOptional ? '<span class="section-optional">(optional)</span>' : ""}
     </span>
+    ${reorderBtns}
     <span class="chevron ${isEnabled ? "open" : ""}">▶</span>`;
         header.onclick = () => toggleSection(header, body);
         block.appendChild(header);
@@ -1118,6 +1193,11 @@
           result.options[opt.key] =
             opt.type === "toggle" ? el.checked : el.value;
         });
+        result.options.section_order = [
+          ...document.querySelectorAll("#form-scroll .section-block[data-section-key]"),
+        ]
+          .map((b) => b.dataset.sectionKey)
+          .filter((k) => k !== "heading");
 
         // sections
         schema.sections.forEach((sec) => {
@@ -1293,6 +1373,20 @@
           container.insertBefore(entry, entry.previousElementSibling);
         } else if (dir === "down" && entry.nextElementSibling) {
           container.insertBefore(entry.nextElementSibling, entry);
+        }
+        setUnsaved(true);
+      }
+
+      function moveSection(btn, dir) {
+        const block = btn.closest(".section-block");
+        const container = document.getElementById("form-scroll");
+        if (dir === "up") {
+          const prev = block.previousElementSibling;
+          if (prev && prev.dataset.sectionKey !== "heading") {
+            container.insertBefore(block, prev);
+          }
+        } else if (dir === "down" && block.nextElementSibling) {
+          container.insertBefore(block.nextElementSibling, block);
         }
         setUnsaved(true);
       }

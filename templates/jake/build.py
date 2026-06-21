@@ -223,6 +223,24 @@ def build_skills(skills):
   \end{{itemize}}
 """
 
+DEFAULT_SECTION_ORDER = ['experience', 'education', 'projects', 'skills']
+
+SECTION_BUILDERS = {
+    'experience': lambda data: build_experience(data['experience']),
+    'education': lambda data: build_education(data['education']),
+    'projects': lambda data: build_projects(data['projects']) if data.get('projects') else '',
+    'skills': lambda data: build_skills(data['skills']),
+}
+
+def build_sections(data, opts):
+    order = opts.get('section_order') or DEFAULT_SECTION_ORDER
+    tex = ""
+    for key in order:
+        builder = SECTION_BUILDERS.get(key)
+        if builder:
+            tex += builder(data)
+    return tex
+
 def build_preamble(opts):
     font = opts.get('font', 'charter')
     color_links = opts.get('color_links', False)
@@ -371,11 +389,7 @@ def main():
     tex = build_preamble(opts)
     tex += "\n\\begin{document}\n"
     tex += build_heading(data['heading'], opts)
-    tex += build_experience(data['experience'])
-    tex += build_education(data['education'])
-    if data.get('projects'):
-        tex += build_projects(data['projects'])
-    tex += build_skills(data['skills'])
+    tex += build_sections(data, opts)
     tex += "\n\\end{document}\n"
 
     output_dir = os.path.join(os.getcwd(), "generated")

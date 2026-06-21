@@ -3,6 +3,16 @@ services:
     build: .
     ports:
       - "7878:7878"
+    environment:
+      PYTHONUNBUFFERED: "1"
     volumes:
       - ./generated:/app/generated
       - ./templates:/app/templates
+    command:
+      [
+        "uv",
+        "run",
+        "server.py",
+        "--details",
+        "/app/templates/jake/details.personal.yml",
+      ]

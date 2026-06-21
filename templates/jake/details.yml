@@ -2,6 +2,12 @@ options:
   icons: true
   font: charter
   color_links: false
+  title_size: medium
+  section_order:
+    - experience
+    - education
+    - projects
+    - skills
 heading:
   name: Jake Ryan
   phone: 123-456-7890
@@ -21,6 +27,9 @@ experience:
     company: Acme Corp
     location: San Francisco, CA
     dates: Jan. 2022 -- Present
+    links:
+      - text: Developer Platform
+        url: https://example.com/platform
     bullets:
       - Led migration of monolithic backend to microservices using Go and Kubernetes, reducing p99 latency by 40%
       - Designed and shipped internal developer platform used by 200+ engineers across 12 teams

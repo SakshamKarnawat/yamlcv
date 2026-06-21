@@ -11,6 +11,7 @@ Opens browser at http://localhost:7878
 import os
 import sys
 import json
+import shutil
 import threading
 import subprocess
 import http.server
@@ -28,6 +29,12 @@ GENERATED_DIR.mkdir(exist_ok=True)
 
 class Handler(http.server.SimpleHTTPRequestHandler):
     _custom_details = None
+
+    @classmethod
+    def details_path(cls, template):
+        if cls._custom_details:
+            return Path(cls._custom_details)
+        return TEMPLATES_DIR / template / "details.yml"
 
     def log_message(self, format, *args):
         pass
@@ -52,7 +59,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
         elif parsed.path.startswith("/api/details"):
             template = urllib.parse.parse_qs(parsed.query).get("template", ["jake"])[0]
-            details_path = TEMPLATES_DIR / template / "details.yml"
+            details_path = Handler.details_path(template)
             if details_path.exists():
                 self.serve_file(details_path, "text/plain")
             else:
@@ -78,29 +85,17 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             template = urllib.parse.parse_qs(parsed.query).get("template", ["jake"])[0]
             length = int(self.headers.get("Content-Length", 0))
             body = self.rfile.read(length).decode("utf-8")
-            details_path = TEMPLATES_DIR / template / "details.yml"
+            details_path = Handler.details_path(template)
+            details_path.parent.mkdir(parents=True, exist_ok=True)
             details_path.write_text(body)
-            error, warning = self.run_build(template, Handler._custom_details)
+            error, warning = self.run_build(template, str(details_path))
             self.json_response({"ok": not error, "error": error, "warning": warning})
 
         else:
             self.send_error(404)
 
-    def run_build(self, template, details_path=None):
-        old_pdf = GENERATED_DIR / "resume.pdf"
-        if old_pdf.exists():
-            old_pdf.unlink()
-
-        build_script = TEMPLATES_DIR / template / "build.py"
-        cmd = [sys.executable, str(build_script)]
-        if details_path:
-            cmd += ["--details", details_path]
-        result = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
-        if result.returncode == 2:
-            return None, result.stderr + result.stdout
-        elif result.returncode != 0:
-            return result.stderr + result.stdout, None
-        return None, None
+    def run_build(self, template, details_path):
+        return run_build(template, details_path)
 
     def serve_file(self, path, content_type):
         try:
@@ -123,22 +118,61 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self.wfile.write(body)
 
 
+def ensure_details_file(details_path):
+    path = Path(details_path)
+    if path.exists():
+        return
+    default = path.parent / "details.yml"
+    if default.exists():
+        path.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy(default, path)
+        print(f"→ Created {path} from {default}", flush=True)
+
+
+def run_build(template, details_path):
+    old_pdf = GENERATED_DIR / "resume.pdf"
+    if old_pdf.exists():
+        old_pdf.unlink()
+
+    build_script = TEMPLATES_DIR / template / "build.py"
+    cmd = [sys.executable, str(build_script), "--details", details_path]
+    result = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
+    if result.returncode == 2:
+        return None, result.stderr + result.stdout
+    elif result.returncode != 0:
+        return result.stderr + result.stdout, None
+    return None, None
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--details', default=None, help='Path to custom details yml file')
     parser.add_argument('--port', default=7878, type=int)
     args = parser.parse_args()
 
+    if args.details:
+        ensure_details_file(args.details)
     Handler._custom_details = args.details
+
+    details_path = Handler.details_path("jake")
+    if details_path.exists():
+        print("→ Building initial PDF...", flush=True)
+        error, warning = run_build("jake", str(details_path))
+        if error:
+            print(f"✗ Initial build failed:\n{error}", flush=True)
+        else:
+            if warning:
+                print(warning, flush=True)
+            print("✓ Initial PDF ready", flush=True)
 
     PORT = args.port
     server = http.server.HTTPServer(("0.0.0.0", PORT), Handler)
-    print(f"→ yamlcv UI running at http://localhost:{PORT}")
+    print(f"→ yamlcv UI running at http://localhost:{PORT}", flush=True)
     if args.details:
-        print(f"→ using details: {args.details}")
-    print("  Ctrl+C to stop")
-    # TODO: if using docker, then don't open!
-    threading.Timer(1, lambda: webbrowser.open(f"http://localhost:{PORT}")).start()
+        print(f"→ using details: {args.details}", flush=True)
+    print("  Ctrl+C to stop", flush=True)
+    if not Path("/.dockerenv").exists():
+        threading.Timer(1, lambda: webbrowser.open(f"http://localhost:{PORT}")).start()
     try:
         server.serve_forever()
     except KeyboardInterrupt:

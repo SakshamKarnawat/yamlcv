@@ -75,7 +75,6 @@ Open `templates/jake/details.yml` and fill in your info. PDF appears in `generat
 
 ## Roadmap
 
-- Add option to move sections up and down
 - More templates (McDowell, etc.)
 - More customization options
 - Proper attribution for templates and tooling used
