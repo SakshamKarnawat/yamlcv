@@ -1,9 +1,8 @@
 # yamlcv
 
-This project started because I wanted to build a better resume.
-All the good templates I found online were formatted as LaTeX, which means I had to use Overleaf.
-As someone who is actively trying to use FOSS over enterprise software for almost everything, this didn't sit well with me.
-So here's yamlcv (looking for a better name :/)
+This project started because I wanted to build a better resume. All the good templates I found online were formatted as LaTeX, which means I had to use Overleaf.
+
+As someone who is actively trying to use FOSS over enterprise software for almost everything, this didn't sit well with me. So here's yamlcv (looking for a better name)
 
 > macOS and Linux ✅  · Windows support planned
 
