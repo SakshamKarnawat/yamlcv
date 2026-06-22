@@ -1,22 +1,27 @@
-# Python-generated files
+# Python
 __pycache__/
 *.py[oc]
 build/
 dist/
 wheels/
 *.egg-info
-
-# Virtual environments
-.venv
-
-.DS_Store
 .venv/
+.pytest_cache/
+
+# OS
+.DS_Store
+
+# ResumeKit — build output
 generated/
-__pycache__/
+
+# LaTeX intermediates (outside generated/)
 *.aux
 *.fdb_latexmk
 *.fls
 *.log
 *.out
 
-details.personal.yml
+# ResumeKit — personal data (sample details.yml stays tracked)
+**/details.personal.yml
+templates/**/details.*.yml
+!templates/**/details.yml

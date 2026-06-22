@@ -9,19 +9,14 @@ options:
     - projects
     - skills
 heading:
-  name: Jake Ryan
+  name: Taylor Morgan
   phone: 123-456-7890
-  email: jake@example.com
-  linkedin: linkedin.com/in/jakeryan
-  github: github.com/jakeryan
-  website: jakeryan.dev
+  email: taylor@example.com
+  linkedin: linkedin.com/in/taylormorgan
+  github: github.com/taylormorgan
+  website: taylormorgan.dev
   title: Senior Software Engineer
   summary: 5+ years building scalable backend systems and developer tools. Passionate about clean architecture and open source.
-education:
-  - institution: Southwestern University
-    location: Georgetown, TX
-    degree: Bachelor of Science in Computer Science
-    dates: Aug. 2015 -- May 2019
 experience:
   - title: Senior Software Engineer
     company: Acme Corp
@@ -57,6 +52,11 @@ experience:
     bullets:
       - Built and delivered 4 full-stack web apps for small business clients using React and Node.js
       - Set up automated deployment pipelines on AWS reducing client deployment time from hours to minutes
+education:
+  - institution: Southwestern University
+    location: Georgetown, TX
+    degree: Bachelor of Science in Computer Science
+    dates: Aug. 2015 -- May 2019
 projects:
   - name: ResumeKit
     stack: Python, LaTeX, YAML, watchdog

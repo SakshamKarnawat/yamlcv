@@ -1,0 +1,12 @@
+.git
+.gitignore
+generated/
+.pytest_cache/
+tests/
+.venv/
+__pycache__/
+*.py[cod]
+.DS_Store
+*.md
+!README.md
+.vscode/

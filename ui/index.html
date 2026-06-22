@@ -4,1598 +4,561 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ResumeKit</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link
-      href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:wght@300;400;500&display=swap"
-      rel="stylesheet"
-    />
+    <!-- CRITICAL: parsed before any external network resource -->
     <style>
-      *,
-      *::before,
-      *::after {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-      }
-
-      :root {
-        --bg: #0f0f0f;
-        --surface: #161616;
-        --surface2: #1e1e1e;
-        --border: #252525;
-        --border2: #2e2e2e;
-        --text: #e8e8e8;
-        --text2: #aaa;
-        --muted: #555;
-        --accent: #c8f562;
-        --accent-dim: rgba(200, 245, 98, 0.07);
-        --red: #ff6b6b;
-        --orange: #f5a623;
-        --font-mono: "DM Mono", monospace;
-        --font-sans: "DM Sans", sans-serif;
-      }
-
       html,
       body {
+        margin: 0;
         height: 100%;
-        background: var(--bg);
-        color: var(--text);
-        font-family: var(--font-sans);
+        background: #0c0c0c;
         overflow: hidden;
       }
-
-      /* HEADER */
-      header {
-        height: 48px;
-        background: var(--surface);
-        border-bottom: 1px solid var(--border);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0 20px;
-        z-index: 10;
-      }
-      .logo {
-        font-family: var(--font-mono);
-        font-size: 13px;
-        font-weight: 500;
-        letter-spacing: 0.08em;
-        color: var(--accent);
-      }
-      .logo span {
-        color: var(--muted);
-      }
-      .header-right {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-      }
-      .status {
-        font-family: var(--font-mono);
-        font-size: 11px;
-        color: var(--muted);
-        display: flex;
-        align-items: center;
-        gap: 6px;
-      }
-      .status-dot {
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        background: var(--muted);
-        transition: background 0.3s;
-      }
-      .status-dot.building {
-        background: var(--orange);
-        animation: pulse 1s infinite;
-      }
-      .status-dot.ready {
-        background: var(--accent);
-      }
-      .status-dot.error {
-        background: var(--red);
-      }
-      @keyframes pulse {
-        0%,
-        100% {
-          opacity: 1;
-        }
-        50% {
-          opacity: 0.3;
-        }
+      #app-root[hidden] {
+        display: none !important;
+        visibility: hidden !important;
       }
 
-      .btn-save {
-        font-family: var(--font-mono);
-        font-size: 11px;
-        font-weight: 500;
-        letter-spacing: 0.06em;
-        background: var(--accent);
-        color: #0f0f0f;
-        border: none;
-        padding: 6px 14px;
-        border-radius: 4px;
-        cursor: pointer;
-        transition: opacity 0.15s;
+      #boot-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 2147483647;
+        background: #0c0c0c;
+        overflow: hidden;
+        transition: opacity 0.45s ease;
       }
-      .btn-save:hover {
-        opacity: 0.85;
-      }
-      .btn-save:disabled {
-        opacity: 0.4;
-        cursor: default;
-      }
-
-      /* SPLIT */
-      .split {
-        display: flex;
-        height: calc(100vh - 48px);
-      }
-
-      /* FORM PANE */
-      .form-pane {
-        width: 44%;
-        min-width: 340px;
-        display: flex;
-        flex-direction: column;
-        border-right: 1px solid var(--border);
-        position: relative;
-      }
-
-      .pane-header {
-        height: 36px;
-        padding: 0 16px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        border-bottom: 1px solid var(--border);
-        background: var(--surface);
-        flex-shrink: 0;
-      }
-      .pane-label {
-        font-family: var(--font-mono);
-        font-size: 10px;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
-        color: var(--muted);
-      }
-
-      .template-select {
-        font-family: var(--font-mono);
-        font-size: 11px;
-        background: var(--surface2);
-        color: var(--text);
-        border: 1px solid var(--border2);
-        border-radius: 3px;
-        padding: 2px 8px;
-        outline: none;
-        cursor: pointer;
-      }
-      .template-select:focus {
-        border-color: var(--accent);
-      }
-
-      .form-scroll {
-        flex: 1;
-        overflow-y: auto;
-        padding: 0 0 40px;
-      }
-      .form-scroll::-webkit-scrollbar {
-        width: 4px;
-      }
-      .form-scroll::-webkit-scrollbar-track {
-        background: transparent;
-      }
-      .form-scroll::-webkit-scrollbar-thumb {
-        background: var(--border2);
-        border-radius: 2px;
-      }
-
-      /* SECTIONS */
-      .section-block {
-        border-bottom: 1px solid var(--border);
-      }
-
-      .section-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 12px 16px;
-        cursor: pointer;
-        user-select: none;
-        transition: background 0.1s;
-      }
-      .section-header:hover {
-        background: var(--accent-dim);
-      }
-
-      .section-actions {
-        display: flex;
-        gap: 6px;
-        margin-right: 6px;
-      }
-
-      .section-title {
-        font-family: var(--font-mono);
-        font-size: 11px;
-        font-weight: 500;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
-        color: var(--accent);
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-      .section-badge {
-        font-size: 10px;
-        background: var(--accent-dim);
-        color: var(--accent);
-        border: 1px solid rgba(200, 245, 98, 0.2);
-        border-radius: 10px;
-        padding: 1px 7px;
-        letter-spacing: 0.05em;
-      }
-      .section-optional {
-        font-size: 10px;
-        color: var(--muted);
-        font-weight: 400;
-        letter-spacing: 0;
-        text-transform: none;
-      }
-      .chevron {
-        color: var(--muted);
-        font-size: 12px;
-        transition: transform 0.2s;
-      }
-      .chevron.open {
-        transform: rotate(90deg);
-      }
-
-      .section-body {
-        display: none;
-        padding: 0 16px 16px;
-      }
-      .section-body.open {
-        display: block;
-      }
-
-      /* FIELDS */
-      .field-row {
-        margin-bottom: 10px;
-      }
-      .field-label {
-        display: block;
-        font-family: var(--font-mono);
-        font-size: 10px;
-        color: var(--text2);
-        margin-bottom: 4px;
-        letter-spacing: 0.04em;
-      }
-      .field-hint {
-        font-size: 10px;
-        color: var(--muted);
-        margin-left: 6px;
-      }
-      .field-required {
-        color: var(--accent);
-        margin-left: 2px;
-      }
-
-      input[type="text"],
-      input[type="email"],
-      textarea,
-      select.field-select {
-        width: 100%;
-        background: var(--surface2);
-        color: var(--text);
-        border: 1px solid var(--border2);
-        border-radius: 4px;
-        font-family: var(--font-mono);
-        font-size: 12px;
-        padding: 7px 10px;
-        outline: none;
-        transition: border-color 0.15s;
-      }
-      input[type="text"]:focus,
-      input[type="email"]:focus,
-      textarea:focus,
-      select.field-select:focus {
-        border-color: var(--accent);
-      }
-      textarea {
-        resize: vertical;
-        min-height: 60px;
-        line-height: 1.5;
-      }
-
-      /* TOGGLE */
-      .toggle-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 6px 0;
-      }
-      .toggle-label {
-        font-family: var(--font-mono);
-        font-size: 11px;
-        color: var(--text2);
-      }
-      .toggle {
-        position: relative;
-        width: 32px;
-        height: 18px;
-        cursor: pointer;
-      }
-      .toggle input {
+      #boot-overlay.boot-exiting {
         opacity: 0;
-        width: 0;
-        height: 0;
-        position: absolute;
+        pointer-events: none;
       }
-      .toggle-track {
+
+      /* Phase 1 — instant splash (no external CSS needed) */
+      .boot-splash {
         position: absolute;
         inset: 0;
-        background: var(--border2);
-        border-radius: 9px;
-        transition: background 0.2s;
-      }
-      .toggle input:checked + .toggle-track {
-        background: var(--accent);
-      }
-      .toggle-thumb {
-        position: absolute;
-        top: 3px;
-        left: 3px;
-        width: 12px;
-        height: 12px;
-        background: var(--muted);
-        border-radius: 50%;
-        transition: all 0.2s;
-      }
-      .toggle input:checked ~ .toggle-thumb {
-        left: 17px;
-        background: #0f0f0f;
-      }
-
-      /* LIST ENTRIES */
-      .list-entry {
-        background: var(--surface2);
-        border: 1px solid var(--border2);
-        border-radius: 6px;
-        margin-bottom: 10px;
-        overflow: hidden;
-      }
-      .entry-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 8px 12px;
-        cursor: pointer;
-        background: var(--surface2);
-      }
-      .entry-header:hover {
-        background: #242424;
-      }
-      .entry-title {
-        font-family: var(--font-mono);
-        font-size: 11px;
-        color: var(--text2);
-      }
-      .entry-actions {
-        display: flex;
-        gap: 6px;
-      }
-
-      .btn-entry {
-        font-family: var(--font-mono);
-        font-size: 10px;
-        background: transparent;
-        border: 1px solid var(--border2);
-        color: var(--muted);
-        padding: 2px 8px;
-        border-radius: 3px;
-        cursor: pointer;
-        transition: all 0.15s;
-      }
-      .btn-entry:hover {
-        border-color: var(--red);
-        color: var(--red);
-      }
-      .btn-entry.btn-up:hover,
-      .btn-entry.btn-down:hover {
-        border-color: var(--text2);
-        color: var(--text2);
-      }
-
-      .entry-body {
-        padding: 10px 12px;
-        border-top: 1px solid var(--border);
-        display: none;
-      }
-      .entry-body.open {
-        display: block;
-      }
-
-      .btn-add {
-        width: 100%;
-        font-family: var(--font-mono);
-        font-size: 11px;
-        background: transparent;
-        border: 1px dashed var(--border2);
-        color: var(--muted);
-        padding: 8px;
-        border-radius: 4px;
-        cursor: pointer;
-        transition: all 0.15s;
-        margin-top: 4px;
-      }
-      .btn-add:hover {
-        border-color: var(--accent);
-        color: var(--accent);
-      }
-
-      /* BULLETS */
-      .bullets-list {
-        margin-bottom: 6px;
-      }
-      .bullet-row {
-        display: flex;
-        gap: 6px;
-        margin-bottom: 6px;
-        align-items: center;
-      }
-      .bullet-row input {
-        flex: 1;
-      }
-      .btn-bullet-remove {
-        background: transparent;
-        border: none;
-        color: var(--muted);
-        font-size: 14px;
-        cursor: pointer;
-        padding: 0 4px;
-        line-height: 1;
-        transition: color 0.15s;
-        flex-shrink: 0;
-      }
-      .btn-bullet-remove:hover {
-        color: var(--red);
-      }
-
-      /* LINKS */
-      .links-list {
-        margin-bottom: 6px;
-      }
-      .link-row {
-        display: flex;
-        gap: 6px;
-        margin-bottom: 6px;
-        align-items: center;
-      }
-      .link-row .link-text {
-        width: 35%;
-        flex-shrink: 0;
-      }
-      .link-row .link-url {
-        flex: 1;
-      }
-
-      /* KEYVALUE (skills) */
-      .kv-row {
-        display: flex;
-        gap: 8px;
-        margin-bottom: 8px;
-        align-items: center;
-      }
-      .kv-row input:first-child {
-        width: 35%;
-        flex-shrink: 0;
-      }
-      .kv-row input:last-child {
-        flex: 1;
-      }
-
-      /* OPTIONS GRID */
-      .options-grid {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-      }
-
-      /* UNSAVED */
-      .unsaved-bar {
-        height: 2px;
-        background: var(--accent);
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        opacity: 0;
-        transition: opacity 0.2s;
-      }
-      .unsaved-bar.visible {
-        opacity: 1;
-      }
-
-      .template-attribution {
-        flex-shrink: 0;
-        padding: 10px 16px 12px;
-        border-top: 1px solid var(--border);
-        font-family: var(--font-mono);
-        font-size: 10px;
-        line-height: 1.55;
-        color: var(--muted);
-      }
-      .template-attribution a {
-        color: var(--text2);
-        text-decoration: none;
-      }
-      .template-attribution a:hover {
-        color: var(--accent);
-        text-decoration: underline;
-      }
-
-      /* RESIZER */
-      .resizer {
-        width: 4px;
-        background: var(--border);
-        cursor: col-resize;
-        transition: background 0.15s;
-        flex-shrink: 0;
-      }
-      .resizer:hover {
-        background: var(--accent);
-      }
-
-      /* PDF PANE */
-      .preview-pane {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        background: #1a1a1a;
-      }
-      .preview-pane .pane-header {
-        background: var(--surface);
-      }
-      .pdf-actions {
-        display: flex;
-        gap: 8px;
-        align-items: center;
-      }
-      .btn-icon {
-        background: transparent;
-        border: 1px solid var(--border);
-        color: var(--muted);
-        font-size: 11px;
-        font-family: var(--font-mono);
-        padding: 3px 8px;
-        border-radius: 3px;
-        cursor: pointer;
-        transition: all 0.15s;
-      }
-      .btn-icon:hover {
-        border-color: var(--accent);
-        color: var(--accent);
-      }
-      #pdf-frame {
-        flex: 1;
-        width: 100%;
-        border: none;
-        background: #2a2a2a;
-      }
-      .pdf-placeholder {
-        flex: 1;
+        z-index: 1;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: 12px;
-        color: var(--muted);
+        gap: 18px;
+        text-align: center;
+        transition: opacity 0.35s ease;
       }
-      .pdf-placeholder .icon {
-        font-size: 40px;
-        opacity: 0.3;
-      }
-      .pdf-placeholder p {
-        font-family: var(--font-mono);
-        font-size: 12px;
-      }
-
-      .error-banner {
-        background: rgba(255, 107, 107, 0.08);
-        border-top: 1px solid rgba(255, 107, 107, 0.3);
-        padding: 10px 16px;
-        font-family: var(--font-mono);
-        font-size: 11px;
-        color: var(--red);
-        max-height: 120px;
-        overflow-y: auto;
-        display: none;
-        white-space: pre-wrap;
-        line-height: 1.5;
-      }
-      .error-banner.visible {
-        display: block;
-      }
-      .warning-banner {
-        background: rgba(245, 166, 35, 0.08);
-        border-top: 1px solid rgba(245, 166, 35, 0.3);
-        padding: 10px 16px;
-        font-family: var(--font-mono);
-        font-size: 11px;
-        color: var(--orange);
-        display: none;
-        white-space: pre-wrap;
-        line-height: 1.5;
-      }
-      .warning-banner.visible {
-        display: block;
-      }
-
-      .toast {
-        position: fixed;
-        bottom: 24px;
-        right: 24px;
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: 6px;
-        padding: 10px 16px;
-        font-family: var(--font-mono);
-        font-size: 12px;
-        color: var(--text);
-        transform: translateY(80px);
+      #boot-overlay.boot-cine .boot-splash {
         opacity: 0;
-        transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-        z-index: 100;
-      }
-      .toast.show {
-        transform: translateY(0);
-        opacity: 1;
-      }
-      .toast.success {
-        border-color: var(--accent);
-      }
-      .toast.error {
-        border-color: var(--red);
+        pointer-events: none;
       }
 
-      .two-col {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 8px;
-      }
-      .section-toggle-row {
+      .boot-logo-box {
+        width: 88px;
+        height: 88px;
+        border-radius: 20px;
+        background: rgba(190, 242, 100, 0.1);
+        border: 1px solid rgba(190, 242, 100, 0.35);
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        padding: 10px 16px 0;
+        justify-content: center;
+        color: #bef264;
+        box-shadow: 0 0 40px rgba(190, 242, 100, 0.15);
+        animation: bootPulse 1.6s ease-in-out infinite;
       }
-      .section-toggle-label {
-        font-family: var(--font-mono);
-        font-size: 10px;
-        color: var(--muted);
+      .boot-logo-box svg {
+        width: 44px;
+        height: 44px;
+      }
+      .boot-title {
+        font:
+          500 clamp(28px, 6vw, 44px)/1.2 system-ui,
+          sans-serif;
+        letter-spacing: -0.03em;
+        color: #f4f4f5;
+        margin: 0;
+      }
+      .boot-hint {
+        font:
+          400 10px/1.4 ui-monospace,
+          monospace;
+        color: #71717a;
+        letter-spacing: 0.06em;
+        margin: 0;
+      }
+      @keyframes bootPulse {
+        0%,
+        100% {
+          transform: scale(1);
+          box-shadow: 0 0 40px rgba(190, 242, 100, 0.12);
+        }
+        50% {
+          transform: scale(1.05);
+          box-shadow: 0 0 56px rgba(190, 242, 100, 0.28);
+        }
+      }
+
+      /* Phase 2 — cinematic (crossfades over splash) */
+      .boot-cine-stage {
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        display: none;
+      }
+      #boot-overlay.boot-cine .boot-cine-stage {
+        display: flex;
       }
     </style>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/spectacle.css" />
   </head>
   <body>
-    <header>
-      <div class="logo">Resume<span>Kit</span></div>
-      <div class="header-right">
-        <div class="status">
-          <div class="status-dot" id="status-dot"></div>
-          <span id="status-text">idle</span>
+    <!-- ───── BOOT OVERLAY (splash + cinematic) ───── -->
+    <div id="boot-overlay">
+      <!-- Phase 1: instant splash -->
+      <div class="boot-splash" id="boot-splash">
+        <div class="boot-logo-box" aria-hidden="true">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path
+              d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+            />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="16" y1="13" x2="8" y2="13" />
+            <line x1="16" y1="17" x2="8" y2="17" />
+          </svg>
         </div>
-        <button class="btn-save" id="btn-save" onclick="save()">
-          ⌘ Save & Build
-        </button>
-      </div>
-    </header>
-
-    <div class="split">
-      <div class="form-pane" id="form-pane">
-        <div class="pane-header">
-          <span class="pane-label">Resume</span>
-          <select
-            class="template-select"
-            id="template-select"
-            onchange="loadTemplate()"
-          ></select>
-        </div>
-        <div class="form-scroll" id="form-scroll"></div>
-        <div class="template-attribution" id="template-attribution"></div>
-        <div class="unsaved-bar" id="unsaved-bar"></div>
+        <p class="boot-title">ResumeKit</p>
+        <p class="boot-hint" id="boot-hint">Loading…</p>
       </div>
 
-      <div class="resizer" id="resizer"></div>
-
-      <div class="preview-pane">
-        <div class="pane-header">
-          <span class="pane-label">PDF Preview</span>
-          <div class="pdf-actions">
-            <button class="btn-icon" onclick="refreshPDF()">↻ refresh</button>
-            <button class="btn-icon" onclick="downloadPDF()">↓ download</button>
+      <!-- Phase 2: cinematic stage (styled by spectacle.css) -->
+      <div
+        class="boot-cine-stage spectacle-boot"
+        id="spectacle-boot"
+        aria-hidden="true"
+      >
+        <div class="spectacle-boot-bg"></div>
+        <div class="spectacle-boot-content">
+          <div class="spectacle-boot-mark">
+            <svg
+              class="spectacle-draw"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+              />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="16" y1="13" x2="8" y2="13" />
+              <line x1="16" y1="17" x2="8" y2="17" />
+            </svg>
           </div>
+          <h1 class="spectacle-boot-title">ResumeKit</h1>
+          <div class="spectacle-boot-flow">
+            <div class="spectacle-node" data-stage="yaml">YAML</div>
+            <div class="spectacle-connector"></div>
+            <div class="spectacle-node" data-stage="latex">LaTeX</div>
+            <div class="spectacle-connector"></div>
+            <div class="spectacle-node" data-stage="pdf">PDF</div>
+          </div>
+          <p class="spectacle-boot-hint">click anywhere to skip</p>
         </div>
-        <iframe id="pdf-frame" style="display: none; flex: 1"></iframe>
-        <div class="pdf-placeholder" id="pdf-placeholder">
-          <div class="icon">⬚</div>
-          <p>save to generate PDF</p>
-        </div>
-        <div class="error-banner" id="error-banner"></div>
-        <div class="warning-banner" id="warning-banner"></div>
+        <div class="spectacle-boot-flash"></div>
       </div>
     </div>
 
-    <div class="toast" id="toast"></div>
+    <!-- ───── APP (hidden until boot sequence completes) ───── -->
+    <div id="app-root" hidden>
+      <header>
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+              />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="16" y1="13" x2="8" y2="13" />
+              <line x1="16" y1="17" x2="8" y2="17" />
+            </svg>
+          </div>
+          <div class="brand-text">
+            <h1 class="brand-name">ResumeKit</h1>
+            <p class="brand-tagline">
+              <span class="pipeline">
+                <span class="pipeline-step">YAML</span
+                ><span class="pipeline-arrow" aria-hidden="true">→</span
+                ><span class="pipeline-step">LaTeX</span
+                ><span class="pipeline-arrow" aria-hidden="true">→</span
+                ><span class="pipeline-step">PDF</span>
+              </span>
+            </p>
+          </div>
+        </div>
+        <div class="header-center">
+          <span class="header-resume-name" id="header-resume-name"></span>
+        </div>
+        <div class="header-actions">
+          <div class="status-pill">
+            <div class="status-dot" id="status-dot"></div>
+            <span id="status-text">idle</span>
+          </div>
+          <label
+            class="autosave-control"
+            for="autosave-select"
+            title="Auto-save delay after you stop typing"
+          >
+            <span class="autosave-label">Auto-save</span>
+            <select class="autosave-select" id="autosave-select">
+              <option value="off">Off</option>
+              <option value="2000">2 sec</option>
+              <option value="5000">5 sec</option>
+              <option value="10000">10 sec</option>
+              <option value="30000" selected>30 sec</option>
+              <option value="60000">1 min</option>
+            </select>
+            <span
+              class="autosave-countdown"
+              id="autosave-countdown"
+              hidden
+            ></span>
+          </label>
+          <button
+            class="btn-icon-header"
+            id="btn-undo"
+            type="button"
+            title="Undo (⌘Z)"
+            aria-label="Undo"
+            disabled
+          >
+            ↶
+          </button>
+          <button
+            class="btn-icon-header"
+            id="btn-redo"
+            type="button"
+            title="Redo (⌘⇧Z)"
+            aria-label="Redo"
+            disabled
+          >
+            ↷
+          </button>
+          <button
+            class="btn-help"
+            id="btn-help"
+            type="button"
+            title="Show tutorial"
+            aria-label="Show tutorial"
+          >
+            ?
+          </button>
+          <button
+            class="btn-icon-header"
+            id="btn-shortcuts"
+            type="button"
+            title="Keyboard shortcuts (/)"
+            aria-label="Keyboard shortcuts"
+          >
+            /
+          </button>
+          <button class="btn-primary" id="btn-save" type="button">
+            Save & Build <kbd>⌘S</kbd>
+          </button>
+        </div>
+      </header>
+
+      <div class="pane-tabs" aria-label="Pane switcher">
+        <button class="pane-tab active" type="button" data-pane="editor">
+          Editor
+        </button>
+        <button class="pane-tab" type="button" data-pane="preview">
+          Preview
+        </button>
+      </div>
+
+      <div class="split">
+        <div class="form-pane" id="form-pane">
+          <div class="pane-header">
+            <span class="pane-label">Editor</span>
+            <div class="editor-controls">
+              <div class="profile-control">
+                <select
+                  class="profile-select"
+                  id="profile-select"
+                  title="Resume profile"
+                ></select>
+                <button
+                  class="btn-icon-sm"
+                  id="btn-rename-profile"
+                  type="button"
+                  title="Rename profile"
+                >
+                  ✎
+                </button>
+                <button
+                  class="btn-icon-sm"
+                  id="btn-add-profile"
+                  type="button"
+                  title="Add profile"
+                >
+                  +
+                </button>
+                <button
+                  class="btn-icon-sm"
+                  id="btn-delete-profile"
+                  type="button"
+                  title="Delete profile"
+                >
+                  −
+                </button>
+              </div>
+              <select class="template-select" id="template-select"></select>
+            </div>
+          </div>
+          <div class="form-scroll" id="form-scroll"></div>
+          <div class="pane-footer">
+            <div class="template-attribution" id="template-attribution"></div>
+            <div class="app-footer">
+              <a
+                href="https://github.com/SakshamKarnawat/ResumeKit"
+                target="_blank"
+                rel="noopener noreferrer"
+                >GitHub</a
+              >
+              <span class="footer-sep">·</span>
+              <button
+                class="btn-reset"
+                id="btn-reset"
+                type="button"
+                title="Reset all resume data to sample"
+              >
+                Reset
+              </button>
+              <span class="footer-sep">·</span>
+              <span>ResumeKit</span>
+            </div>
+          </div>
+          <div class="unsaved-bar" id="unsaved-bar"></div>
+        </div>
+
+        <div class="resizer" id="resizer" aria-hidden="true"></div>
+
+        <div class="preview-pane" id="preview-pane">
+          <div class="pane-header">
+            <span class="pane-label">PDF Preview</span>
+            <div class="pdf-actions">
+              <span class="page-badge" id="page-badge" hidden title="Page count"
+                >—</span
+              >
+              <button
+                class="btn-preview-action"
+                id="btn-refresh"
+                type="button"
+                title="Refresh PDF preview"
+              >
+                ↻ Refresh
+              </button>
+              <div class="download-group">
+                <button
+                  class="btn-download-pdf"
+                  id="btn-download"
+                  type="button"
+                >
+                  ↓ Download PDF
+                </button>
+                <button
+                  class="btn-download-more"
+                  id="btn-download-more"
+                  type="button"
+                  aria-label="More download formats"
+                >
+                  ▾
+                </button>
+                <div class="download-menu" id="download-menu" hidden>
+                  <button type="button" data-download="pdf">
+                    PDF (primary)
+                  </button>
+                  <button type="button" data-download="yaml">
+                    YAML source
+                  </button>
+                  <button type="button" data-download="tex">
+                    LaTeX (.tex)
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <iframe
+            id="pdf-frame"
+            style="display: none; flex: 1"
+            title="PDF preview"
+          ></iframe>
+          <div
+            class="spectacle-scan"
+            id="spectacle-scan"
+            hidden
+            aria-hidden="true"
+          >
+            <div class="spectacle-scan-grid"></div>
+            <div class="spectacle-scan-beam"></div>
+            <div class="spectacle-scan-flash"></div>
+          </div>
+          <div class="pdf-placeholder visible" id="pdf-placeholder">
+            <div class="pdf-placeholder-icon" aria-hidden="true">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                />
+                <polyline points="14 2 14 8 20 8" />
+              </svg>
+            </div>
+            <h2>No preview yet</h2>
+            <p>
+              Start editing — your PDF will appear here after auto-save, or
+              press Save & Build.
+            </p>
+          </div>
+          <div class="error-banner" id="error-banner"></div>
+          <div class="warning-banner" id="warning-banner"></div>
+        </div>
+      </div>
+
+      <div class="mobile-notice" id="mobile-notice" hidden>
+        <div class="mobile-notice-card">
+          <h2>Small screen detected</h2>
+          <p>
+            ResumeKit is optimized for desktop and tablet. For the best
+            experience, use a wider screen or rotate your device.
+          </p>
+          <button
+            type="button"
+            class="btn-primary"
+            onclick="this.closest('.mobile-notice').hidden = true"
+          >
+            Continue anyway
+          </button>
+        </div>
+      </div>
+
+      <div class="toast" id="toast"></div>
+
+      <div
+        class="spectacle-build"
+        id="spectacle-build"
+        hidden
+        aria-hidden="true"
+      >
+        <div class="spectacle-build-backdrop"></div>
+        <div class="spectacle-build-stage">
+          <div class="spectacle-build-heading">Compiling Resume</div>
+          <div class="spectacle-build-pipeline">
+            <div class="spectacle-build-card" data-step="yaml">
+              <span class="spectacle-build-card-icon">{ }</span>
+              <span class="spectacle-build-card-label">YAML</span>
+            </div>
+            <div class="spectacle-build-link"></div>
+            <div class="spectacle-build-card" data-step="latex">
+              <div class="spectacle-build-card-rain" aria-hidden="true"></div>
+              <span class="spectacle-build-card-icon">TeX</span>
+              <span class="spectacle-build-card-label">LaTeX</span>
+            </div>
+            <div class="spectacle-build-link"></div>
+            <div class="spectacle-build-card" data-step="pdf">
+              <span class="spectacle-build-card-icon">PDF</span>
+              <span class="spectacle-build-card-label">Output</span>
+            </div>
+          </div>
+          <div class="spectacle-build-bolt"></div>
+          <div class="spectacle-build-shockwave"></div>
+          <div class="spectacle-build-particles"></div>
+        </div>
+      </div>
+
+      <div
+        class="modal"
+        id="shortcuts-modal"
+        hidden
+        aria-modal="true"
+        role="dialog"
+        aria-labelledby="shortcuts-title"
+      >
+        <div class="modal-backdrop" id="shortcuts-backdrop"></div>
+        <div class="modal-card">
+          <div class="modal-header">
+            <h2 id="shortcuts-title">Keyboard shortcuts</h2>
+            <button
+              type="button"
+              class="modal-close"
+              id="shortcuts-close"
+              aria-label="Close"
+            >
+              ×
+            </button>
+          </div>
+          <div class="shortcuts-list" id="shortcuts-list"></div>
+        </div>
+      </div>
+
+      <div
+        class="tutorial"
+        id="tutorial"
+        hidden
+        aria-modal="true"
+        role="dialog"
+        aria-labelledby="tutorial-title"
+      >
+        <div class="tutorial-backdrop"></div>
+        <div class="tutorial-spotlight" id="tutorial-spotlight"></div>
+        <div class="tutorial-card" id="tutorial-card">
+          <div class="tutorial-progress" id="tutorial-progress"></div>
+          <p class="tutorial-step-label" id="tutorial-step-label"></p>
+          <h2 class="tutorial-title" id="tutorial-title"></h2>
+          <p class="tutorial-body" id="tutorial-body"></p>
+          <div class="tutorial-actions">
+            <button type="button" class="tutorial-skip" id="tutorial-skip">
+              Skip tour
+            </button>
+            <div class="tutorial-nav">
+              <button type="button" class="tutorial-back" id="tutorial-back">
+                Back
+              </button>
+              <button type="button" class="tutorial-next" id="tutorial-next">
+                Next
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
-    <script>
-      let currentTemplate = "jake";
-      let schema = null;
-      let formData = {};
-      let pdfCacheBust = Date.now();
-
-      const TEMPLATE_ATTRIBUTIONS = {
-        jake: {
-          name: "Jake's Resume",
-          author: "Jake Gutierrez",
-          authorUrl: "https://github.com/jakegut/resume",
-          license: "MIT",
-          basedOn: {
-            name: "sb2nov/resume",
-            url: "https://github.com/sb2nov/resume",
-          },
-        },
-      };
-
-      function updateTemplateAttribution() {
-        const el = document.getElementById("template-attribution");
-        const attr = TEMPLATE_ATTRIBUTIONS[currentTemplate];
-        if (!attr) {
-          el.innerHTML = "";
-          return;
-        }
-        el.innerHTML = `Template: <a href="${attr.authorUrl}" target="_blank" rel="noopener noreferrer">${attr.name}</a> (${attr.license}) · <a href="${attr.authorUrl}" target="_blank" rel="noopener noreferrer">${attr.author}</a> · based on <a href="${attr.basedOn.url}" target="_blank" rel="noopener noreferrer">${attr.basedOn.name}</a>`;
-      }
-
-      // ── INIT ──────────────────────────────────────────────
-      async function init() {
-        await loadTemplates();
-        await loadSchemaAndDetails();
-        await tryLoadPDF();
-      }
-
-      async function loadTemplates() {
-        const res = await fetch("/api/templates");
-        const templates = await res.json();
-        const sel = document.getElementById("template-select");
-        sel.innerHTML = templates
-          .map((t) => `<option value="${t}">${t}</option>`)
-          .join("");
-        currentTemplate = templates[0] || "jake";
-        updateTemplateAttribution();
-      }
-
-      async function loadTemplate() {
-        currentTemplate = document.getElementById("template-select").value;
-        updateTemplateAttribution();
-        await loadSchemaAndDetails();
-        await tryLoadPDF();
-      }
-
-      async function loadSchemaAndDetails() {
-        const [schemaRes, detailsRes] = await Promise.all([
-          fetch(`/api/schema?template=${currentTemplate}`),
-          fetch(`/api/details?template=${currentTemplate}`),
-        ]);
-        if (!schemaRes.ok) return;
-        const schemaText = await schemaRes.text();
-        schema = jsyaml.load(schemaText);
-
-        formData = {};
-        if (detailsRes.ok) {
-          const detailsText = await detailsRes.text();
-          try {
-            formData = jsyaml.load(detailsText) || {};
-          } catch (e) {}
-        }
-        renderForm();
-        setUnsaved(false);
-      }
-
-      // ── FORM RENDERER ─────────────────────────────────────
-      function renderForm() {
-        const container = document.getElementById("form-scroll");
-        container.innerHTML = "";
-
-        // OPTIONS
-        const optBlock = buildOptionsBlock();
-        container.appendChild(optBlock);
-
-        // SECTIONS
-        const headingSec = schema.sections.find((s) => s.key === "heading");
-        if (headingSec) container.appendChild(buildSectionBlock(headingSec));
-
-        getSectionOrder().forEach((key) => {
-          if (key === "heading") return;
-          const sec = schema.sections.find((s) => s.key === key);
-          if (sec) container.appendChild(buildSectionBlock(sec));
-        });
-      }
-
-      function getSectionOrder() {
-        const defaultOrder = schema.sections
-          .map((s) => s.key)
-          .filter((k) => k !== "heading");
-        const saved = formData.options?.section_order;
-        if (!saved?.length) return defaultOrder;
-        const ordered = saved.filter((k) => defaultOrder.includes(k));
-        defaultOrder.forEach((k) => {
-          if (!ordered.includes(k)) ordered.push(k);
-        });
-        return ordered;
-      }
-
-      function buildOptionsBlock() {
-        const block = document.createElement("div");
-        block.className = "section-block";
-
-        const header = document.createElement("div");
-        header.className = "section-header";
-        header.innerHTML = `<span class="section-title">Options</span><span class="chevron open">▶</span>`;
-        header.onclick = () => toggleSection(header, body);
-        block.appendChild(header);
-
-        const body = document.createElement("div");
-        body.className = "section-body open";
-
-        const opts = formData.options || {};
-
-        schema.options.forEach((opt) => {
-          if (opt.type === "toggle") {
-            const val =
-              opts[opt.key] !== undefined ? opts[opt.key] : opt.default;
-            const row = document.createElement("div");
-            row.className = "toggle-row";
-            const id = `opt_${opt.key}`;
-            row.innerHTML = `
-        <span class="toggle-label">${opt.label}</span>
-        <label class="toggle">
-          <input type="checkbox" id="${id}" ${val ? "checked" : ""} onchange="setUnsaved(true)">
-          <span class="toggle-track"></span>
-          <span class="toggle-thumb"></span>
-        </label>`;
-            body.appendChild(row);
-          } else if (opt.type === "select") {
-            const val =
-              opts[opt.key] !== undefined ? opts[opt.key] : opt.default;
-            const row = document.createElement("div");
-            row.className = "field-row";
-            const id = `opt_${opt.key}`;
-            row.innerHTML = `
-        <label class="field-label" for="${id}">${opt.label}</label>
-        <select class="field-select" id="${id}" onchange="setUnsaved(true)">
-          ${opt.options.map((o) => `<option value="${o.value}" ${val === o.value ? "selected" : ""}>${o.label}</option>`).join("")}
-        </select>`;
-            body.appendChild(row);
-          }
-        });
-
-        block.appendChild(body);
-        return block;
-      }
-
-      function buildSectionBlock(sec) {
-        const block = document.createElement("div");
-        block.className = "section-block";
-        block.dataset.sectionKey = sec.key;
-
-        const isOptional = sec.required === false;
-        const data = formData[sec.key];
-        const hasData =
-          data &&
-          (Array.isArray(data)
-            ? data.length > 0
-            : Object.keys(data).length > 0);
-        const isEnabled = !isOptional || hasData;
-
-        const header = document.createElement("div");
-        header.className = "section-header";
-        const reorderBtns =
-          sec.key !== "heading"
-            ? `<div class="section-actions">
-      <button class="btn-entry btn-up" onclick="event.stopPropagation(); moveSection(this,'up')" title="move up">↑</button>
-      <button class="btn-entry btn-down" onclick="event.stopPropagation(); moveSection(this,'down')" title="move down">↓</button>
-    </div>`
-            : "";
-        header.innerHTML = `
-    <span class="section-title">
-      ${sec.label}
-      ${isOptional ? '<span class="section-optional">(optional)</span>' : ""}
-    </span>
-    ${reorderBtns}
-    <span class="chevron ${isEnabled ? "open" : ""}">▶</span>`;
-        header.onclick = () => toggleSection(header, body);
-        block.appendChild(header);
-
-        const body = document.createElement("div");
-        body.className = `section-body ${isEnabled ? "open" : ""}`;
-
-        if (sec.type === "single") {
-          const d = formData[sec.key] || {};
-          sec.fields.forEach((f) => {
-            body.appendChild(buildField(f, d[f.key], `${sec.key}.${f.key}`));
-          });
-        } else if (sec.type === "list") {
-          const entries = formData[sec.key] || [];
-          const listContainer = document.createElement("div");
-          listContainer.id = `list_${sec.key}`;
-
-          if (entries.length > 0) {
-            entries.forEach((entry, i) =>
-              addListEntry(listContainer, sec, entry, i),
-            );
-          } else {
-            addListEntry(listContainer, sec, {}, 0);
-          }
-
-          body.appendChild(listContainer);
-
-          const addBtn = document.createElement("button");
-          addBtn.className = "btn-add";
-          addBtn.textContent = `+ add ${sec.label.toLowerCase().replace(/s$/, "")}`;
-          addBtn.onclick = () => {
-            const count = listContainer.querySelectorAll(".list-entry").length;
-            addListEntry(listContainer, sec, {}, count);
-            setUnsaved(true);
-          };
-          body.appendChild(addBtn);
-        } else if (sec.type === "keyvalue") {
-          const kvContainer = document.createElement("div");
-          kvContainer.id = `kv_${sec.key}`;
-          const skills = formData[sec.key] || {};
-          const entries = Object.entries(skills);
-          if (entries.length > 0) {
-            entries.forEach(([k, v]) => addKVRow(kvContainer, sec, k, v));
-          } else {
-            addKVRow(kvContainer, sec, "", "");
-          }
-          body.appendChild(kvContainer);
-
-          const addBtn = document.createElement("button");
-          addBtn.className = "btn-add";
-          addBtn.textContent = "+ add skill category";
-          addBtn.onclick = () => {
-            addKVRow(kvContainer, sec, "", "");
-            setUnsaved(true);
-          };
-          body.appendChild(addBtn);
-        }
-
-        block.appendChild(body);
-        return block;
-      }
-
-      function addListEntry(container, sec, data, index) {
-        const entry = document.createElement("div");
-        entry.className = "list-entry";
-
-        const titleField = sec.fields.find(
-          (f) =>
-            f.key === "title" || f.key === "name" || f.key === "institution",
-        );
-        const titleVal =
-          data[titleField?.key] ||
-          `${sec.label.replace(/s$/, "")} ${index + 1}`;
-
-        const entryHeader = document.createElement("div");
-        entryHeader.className = "entry-header";
-        entryHeader.innerHTML = `
-    <span class="entry-title">${titleVal}</span>
-    <div class="entry-actions">
-      <button class="btn-entry btn-up" onclick="moveEntry(this,'up')" title="move up">↑</button>
-      <button class="btn-entry btn-down" onclick="moveEntry(this,'down')" title="move down">↓</button>
-      <button class="btn-entry" onclick="removeEntry(this)" title="remove">✕</button>
-    </div>`;
-        entryHeader.querySelector(".entry-title").onclick = (e) => {
-          e.stopPropagation();
-          toggleEntry(entryHeader, entryBody);
-        };
-        entryHeader.querySelector(".entry-title").style.cursor = "pointer";
-        entryHeader.querySelector(".entry-title").style.flex = "1";
-        entry.appendChild(entryHeader);
-
-        const entryBody = document.createElement("div");
-        entryBody.className = "entry-body open";
-        entryBody.dataset.sectionKey = sec.key;
-
-        // group non-bullet fields in two-col where sensible
-        const regularFields = sec.fields.filter(
-          (f) => f.type !== "bullets" && f.type !== "links",
-        );
-        const bulletField = sec.fields.find((f) => f.type === "bullets");
-        const linkField = sec.fields.find((f) => f.type === "links");
-
-        const grid = document.createElement("div");
-        grid.className = "two-col";
-        const fullFields = ["summary", "stack", "degree", "demo", "repo"];
-
-        regularFields.forEach((f) => {
-          const wrapper = document.createElement("div");
-          const isFull = fullFields.includes(f.key) || f.type === "textarea";
-          if (isFull) {
-            grid.appendChild(document.createElement("div")); // spacer if needed
-          }
-          const fieldEl = buildField(f, data[f.key], `${sec.key}[].${f.key}`);
-          if (isFull) {
-            // add full-width outside grid
-            entryBody.appendChild(grid);
-            entryBody.appendChild(fieldEl);
-            return;
-          }
-          grid.appendChild(fieldEl);
-        });
-
-        if (grid.children.length > 0 && !entryBody.contains(grid)) {
-          entryBody.appendChild(grid);
-        }
-
-        if (linkField) {
-          const linksEl = buildLinksField(
-            linkField,
-            data[linkField.key] || [],
-          );
-          entryBody.appendChild(linksEl);
-        }
-
-        if (bulletField) {
-          const bulletsEl = buildBulletsField(
-            bulletField,
-            data[bulletField.key] || [],
-            sec.key,
-          );
-          entryBody.appendChild(bulletsEl);
-        }
-
-        // update entry title on input
-        const firstInput = entryBody.querySelector("input");
-        if (firstInput) {
-          firstInput.addEventListener("input", () => {
-            entryHeader.querySelector(".entry-title").textContent =
-              firstInput.value || titleVal;
-          });
-        }
-
-        entry.appendChild(entryBody);
-        container.appendChild(entry);
-      }
-
-      function addKVRow(container, sec, key, value) {
-        const row = document.createElement("div");
-        row.className = "kv-row";
-        row.innerHTML = `
-    <input type="text" placeholder="${sec.placeholder_key}" value="${escHtml(key)}" onchange="setUnsaved(true)">
-    <input type="text" placeholder="${sec.placeholder_value}" value="${escHtml(value)}" onchange="setUnsaved(true)">
-    <button class="btn-bullet-remove" onclick="this.parentElement.remove(); setUnsaved(true)">✕</button>`;
-        container.appendChild(row);
-      }
-
-      function buildField(field, value, id) {
-        const wrapper = document.createElement("div");
-        wrapper.className = "field-row";
-
-        const label = document.createElement("label");
-        label.className = "field-label";
-        label.htmlFor = id;
-        label.innerHTML = `${field.label}${field.required ? '<span class="field-required">*</span>' : ""}${field.hint ? `<span class="field-hint">${field.hint}</span>` : ""}`;
-        wrapper.appendChild(label);
-
-        if (field.type === "textarea") {
-          const el = document.createElement("textarea");
-          el.id = id;
-          el.placeholder = field.placeholder || "";
-          el.value = value || "";
-          el.oninput = () => setUnsaved(true);
-          wrapper.appendChild(el);
-        } else {
-          const el = document.createElement("input");
-          el.type = field.type === "email" ? "email" : "text";
-          el.id = id;
-          el.placeholder = field.placeholder || "";
-          el.value = value || "";
-          el.oninput = () => setUnsaved(true);
-          wrapper.appendChild(el);
-        }
-        return wrapper;
-      }
-
-      function buildBulletsField(field, bullets, sectionKey) {
-        const wrapper = document.createElement("div");
-        wrapper.className = "field-row";
-        wrapper.innerHTML = `<label class="field-label">${field.label}<span class="field-required">*</span>${field.hint ? `<span class="field-hint">${field.hint}</span>` : ""}</label>`;
-
-        const list = document.createElement("div");
-        list.className = "bullets-list";
-
-        const addBullet = (val) => {
-          const row = document.createElement("div");
-          row.className = "bullet-row";
-          row.innerHTML = `
-      <input type="text" placeholder="${field.placeholder}" value="${escHtml(val)}" oninput="setUnsaved(true)">
-      <button class="btn-entry btn-up" onclick="moveBullet(this,'up')" title="move up">↑</button>
-      <button class="btn-entry btn-down" onclick="moveBullet(this,'down')" title="move down">↓</button>
-      <button class="btn-bullet-remove" onclick="this.parentElement.remove(); setUnsaved(true)" title="remove">✕</button>`;
-          list.appendChild(row);
-        };
-
-        if (bullets.length > 0) bullets.forEach((b) => addBullet(b));
-        else addBullet("");
-
-        wrapper.appendChild(list);
-
-        const addBtn = document.createElement("button");
-        addBtn.className = "btn-add";
-        addBtn.textContent = "+ add bullet";
-        addBtn.style.marginTop = "4px";
-        addBtn.onclick = () => {
-          addBullet("");
-          setUnsaved(true);
-        };
-        wrapper.appendChild(addBtn);
-        return wrapper;
-      }
-
-      function buildLinksField(field, links) {
-        const wrapper = document.createElement("div");
-        wrapper.className = "field-row";
-        wrapper.innerHTML = `<label class="field-label">${field.label}${field.hint ? `<span class="field-hint">${field.hint}</span>` : ""}</label>`;
-
-        const list = document.createElement("div");
-        list.className = "links-list";
-
-        const addLink = (data) => {
-          const row = document.createElement("div");
-          row.className = "link-row";
-          row.innerHTML = `
-      <input type="text" class="link-text" placeholder="${field.placeholder_text || "Label"}" value="${escHtml(data?.text || "")}" oninput="setUnsaved(true)">
-      <input type="text" class="link-url" placeholder="${field.placeholder_url || "https://..."}" value="${escHtml(data?.url || "")}" oninput="setUnsaved(true)">
-      <button class="btn-entry btn-up" onclick="moveLink(this,'up')" title="move up">↑</button>
-      <button class="btn-entry btn-down" onclick="moveLink(this,'down')" title="move down">↓</button>
-      <button class="btn-bullet-remove" onclick="this.parentElement.remove(); setUnsaved(true)" title="remove">✕</button>`;
-          list.appendChild(row);
-        };
-
-        if (links.length > 0) links.forEach((l) => addLink(l));
-
-        wrapper.appendChild(list);
-
-        const addBtn = document.createElement("button");
-        addBtn.className = "btn-add";
-        addBtn.textContent = "+ add link";
-        addBtn.style.marginTop = "4px";
-        addBtn.onclick = () => {
-          addLink({});
-          setUnsaved(true);
-        };
-        wrapper.appendChild(addBtn);
-        return wrapper;
-      }
-
-      // ── COLLECT FORM DATA ─────────────────────────────────
-      function collectFormData() {
-        const result = {};
-
-        // options
-        result.options = {};
-        schema.options.forEach((opt) => {
-          const el = document.getElementById(`opt_${opt.key}`);
-          if (!el) return;
-          result.options[opt.key] =
-            opt.type === "toggle" ? el.checked : el.value;
-        });
-        result.options.section_order = [
-          ...document.querySelectorAll("#form-scroll .section-block[data-section-key]"),
-        ]
-          .map((b) => b.dataset.sectionKey)
-          .filter((k) => k !== "heading");
-
-        // sections
-        schema.sections.forEach((sec) => {
-          const block = document.querySelector(
-            `[data-section-key="${sec.key}"]`,
-          );
-          const body = block?.querySelector(".section-body");
-          const isOpen = body?.classList.contains("open");
-
-          if (sec.type === "single") {
-            if (!isOpen && sec.required === false) return;
-            result[sec.key] = {};
-            sec.fields.forEach((f) => {
-              const el = document.getElementById(`${sec.key}.${f.key}`);
-              if (el) result[sec.key][f.key] = el.value.trim() || undefined;
-            });
-            // remove undefined keys
-            Object.keys(result[sec.key]).forEach((k) => {
-              if (result[sec.key][k] === undefined) delete result[sec.key][k];
-            });
-          } else if (sec.type === "list") {
-            if (!isOpen && sec.required === false) {
-              result[sec.key] = undefined;
-              return;
-            }
-            const entries = document.querySelectorAll(
-              `#list_${sec.key} .list-entry`,
-            );
-            result[sec.key] = [];
-            entries.forEach((entry) => {
-              const obj = {};
-              const body = entry.querySelector(".entry-body");
-              sec.fields.forEach((f) => {
-                if (f.type === "bullets") {
-                  const bullets = [
-                    ...body.querySelectorAll(".bullet-row input"),
-                  ]
-                    .map((i) => i.value.trim())
-                    .filter(Boolean);
-                  if (bullets.length) obj[f.key] = bullets;
-                } else if (f.type === "links") {
-                  const links = [...body.querySelectorAll(".link-row")]
-                    .map((row) => ({
-                      text: row.querySelector(".link-text").value.trim(),
-                      url: row.querySelector(".link-url").value.trim(),
-                    }))
-                    .filter((l) => l.url);
-                  if (links.length) obj[f.key] = links;
-                } else {
-                  const inputs = body.querySelectorAll(
-                    'input[type="text"], input[type="email"], textarea',
-                  );
-                  // match by placeholder
-                  const input = [...inputs].find(
-                    (i) => i.placeholder === (f.placeholder || ""),
-                  );
-                  if (input && input.value.trim())
-                    obj[f.key] = input.value.trim();
-                }
-              });
-              if (Object.keys(obj).length > 0) result[sec.key].push(obj);
-            });
-            if (result[sec.key].length === 0 && sec.required === false)
-              result[sec.key] = undefined;
-          } else if (sec.type === "keyvalue") {
-            if (!isOpen && sec.required === false) return;
-            result[sec.key] = {};
-            document
-              .querySelectorAll(`#kv_${sec.key} .kv-row`)
-              .forEach((row) => {
-                const inputs = row.querySelectorAll("input");
-                const k = inputs[0]?.value.trim();
-                const v = inputs[1]?.value.trim();
-                if (k && v) result[sec.key][k] = v;
-              });
-          }
-        });
-
-        // clean undefined
-        Object.keys(result).forEach((k) => {
-          if (result[k] === undefined) delete result[k];
-        });
-        return result;
-      }
-
-      // ── SAVE ──────────────────────────────────────────────
-      async function save() {
-        const data = collectFormData();
-        const yamlStr = jsyaml.dump(data, { lineWidth: -1 });
-
-        setStatus("building", "building...");
-        hideError();
-        hideWarning();
-        document.getElementById("btn-save").disabled = true;
-
-        try {
-          const res = await fetch(`/api/save?template=${currentTemplate}`, {
-            method: "POST",
-            body: yamlStr,
-            headers: { "Content-Type": "text/plain" },
-          });
-          const resp = await res.json();
-
-          if (resp.ok) {
-            setUnsaved(false);
-            pdfCacheBust = Date.now();
-            showPDF(`/api/pdf?template=${currentTemplate}&v=${pdfCacheBust}`);
-            setStatus("ready", "ready");
-            toast("✓ PDF updated", "success");
-            if (resp.warning) showWarning(resp.warning);
-          } else {
-            setStatus("error", "build failed");
-            showError(resp.error);
-            toast("✗ Build failed", "error");
-          }
-        } catch (e) {
-          setStatus("error", "error");
-          toast("✗ Save failed", "error");
-        } finally {
-          document.getElementById("btn-save").disabled = false;
-        }
-      }
-
-      // ── PDF ───────────────────────────────────────────────
-      async function tryLoadPDF() {
-        const res = await fetch(
-          `/api/pdf?template=${currentTemplate}&v=${pdfCacheBust}`,
-        );
-        if (res.ok)
-          showPDF(`/api/pdf?template=${currentTemplate}&v=${pdfCacheBust}`);
-      }
-
-      function showPDF(url) {
-        const frame = document.getElementById("pdf-frame");
-        frame.src = url;
-        frame.style.display = "block";
-        document.getElementById("pdf-placeholder").style.display = "none";
-        hideError();
-        hideWarning();
-      }
-
-      function refreshPDF() {
-        pdfCacheBust = Date.now();
-        tryLoadPDF();
-      }
-      function downloadPDF() {
-        const a = document.createElement("a");
-        a.href = `/api/pdf?template=${currentTemplate}&v=${Date.now()}`;
-        a.download = "resume.pdf";
-        a.click();
-      }
-
-      // ── UI HELPERS ────────────────────────────────────────
-      function toggleSection(header, body) {
-        const chevron = header.querySelector(".chevron");
-        body.classList.toggle("open");
-        chevron.classList.toggle("open");
-      }
-
-      function toggleEntry(header, body) {
-        body.classList.toggle("open");
-      }
-
-      function removeEntry(btn) {
-        btn.closest(".list-entry").remove();
-        setUnsaved(true);
-      }
-
-      function moveEntry(btn, dir) {
-        const entry = btn.closest(".list-entry");
-        const container = entry.parentElement;
-        if (dir === "up" && entry.previousElementSibling) {
-          container.insertBefore(entry, entry.previousElementSibling);
-        } else if (dir === "down" && entry.nextElementSibling) {
-          container.insertBefore(entry.nextElementSibling, entry);
-        }
-        setUnsaved(true);
-      }
-
-      function moveSection(btn, dir) {
-        const block = btn.closest(".section-block");
-        const container = document.getElementById("form-scroll");
-        if (dir === "up") {
-          const prev = block.previousElementSibling;
-          if (prev && prev.dataset.sectionKey !== "heading") {
-            container.insertBefore(block, prev);
-          }
-        } else if (dir === "down" && block.nextElementSibling) {
-          container.insertBefore(block.nextElementSibling, block);
-        }
-        setUnsaved(true);
-      }
-
-      function moveBullet(btn, dir) {
-        const row = btn.closest(".bullet-row");
-        const container = row.parentElement;
-        if (dir === "up" && row.previousElementSibling) {
-          container.insertBefore(row, row.previousElementSibling);
-        } else if (dir === "down" && row.nextElementSibling) {
-          container.insertBefore(row.nextElementSibling, row);
-        }
-        setUnsaved(true);
-      }
-
-      function moveLink(btn, dir) {
-        const row = btn.closest(".link-row");
-        const container = row.parentElement;
-        if (dir === "up" && row.previousElementSibling) {
-          container.insertBefore(row, row.previousElementSibling);
-        } else if (dir === "down" && row.nextElementSibling) {
-          container.insertBefore(row.nextElementSibling, row);
-        }
-        setUnsaved(true);
-      }
-
-      function findEnclosingFormat(val, selStart, selEnd, marker) {
-        const len = marker.length;
-        if (marker === "**") {
-          let open = -1;
-          for (let i = selStart; i >= 0; i--) {
-            if (val.slice(i, i + 2) === "**") {
-              open = i;
-              break;
-            }
-          }
-          if (open === -1) return null;
-          const searchFrom = Math.max(open + 2, selEnd);
-          let close = -1;
-          for (let i = searchFrom; i <= val.length - 2; i++) {
-            if (val.slice(i, i + 2) === "**") {
-              close = i;
-              break;
-            }
-          }
-          if (close === -1) return null;
-          const innerStart = open + 2;
-          const innerEnd = close;
-          if (selStart >= innerStart && selEnd <= innerEnd) {
-            return { open, close, innerStart, innerEnd };
-          }
-          return null;
-        }
-
-        let open = -1;
-        for (let i = selStart; i >= 0; i--) {
-          if (val[i] === "*" && val[i - 1] !== "*" && val[i + 1] !== "*") {
-            open = i;
-            break;
-          }
-        }
-        if (open === -1) return null;
-        const searchFrom = Math.max(open + 1, selEnd);
-        let close = -1;
-        for (let i = searchFrom; i < val.length; i++) {
-          if (val[i] === "*" && val[i - 1] !== "*" && val[i + 1] !== "*") {
-            close = i;
-            break;
-          }
-        }
-        if (close === -1) return null;
-        const innerStart = open + 1;
-        const innerEnd = close;
-        if (selStart >= innerStart && selEnd <= innerEnd) {
-          return { open, close, innerStart, innerEnd };
-        }
-        return null;
-      }
-
-      function wrapBulletFormat(input, marker) {
-        const start = input.selectionStart;
-        const end = input.selectionEnd;
-        const val = input.value;
-        const len = marker.length;
-        const selected = val.slice(start, end);
-
-        let bounds = null;
-
-        if (
-          selected.length >= 2 * len &&
-          selected.startsWith(marker) &&
-          selected.endsWith(marker)
-        ) {
-          bounds = {
-            open: start,
-            close: end - len,
-            innerStart: start + len,
-            innerEnd: end - len,
-          };
-        } else if (
-          val.slice(start - len, start) === marker &&
-          val.slice(end, end + len) === marker
-        ) {
-          bounds = { open: start - len, close: end, innerStart: start, innerEnd: end };
-        } else {
-          bounds = findEnclosingFormat(val, start, end, marker);
-        }
-
-        if (bounds) {
-          const inner = val.slice(bounds.innerStart, bounds.innerEnd);
-          input.value =
-            val.slice(0, bounds.open) + inner + val.slice(bounds.close + len);
-          if (start === end) {
-            const cursor = bounds.open + (start - bounds.innerStart);
-            input.selectionStart = input.selectionEnd = cursor;
-          } else {
-            input.selectionStart = bounds.open;
-            input.selectionEnd = bounds.open + inner.length;
-          }
-        } else if (start === end) {
-          input.value = val.slice(0, start) + marker + marker + val.slice(end);
-          input.selectionStart = input.selectionEnd = start + len;
-        } else {
-          input.value =
-            val.slice(0, start) + marker + selected + marker + val.slice(end);
-          input.selectionStart = start;
-          input.selectionEnd = end + 2 * len;
-        }
-        setUnsaved(true);
-      }
-
-      function showError(msg) {
-        const el = document.getElementById("error-banner");
-        el.textContent = msg;
-        el.classList.add("visible");
-      }
-      function hideError() {
-        document.getElementById("error-banner").classList.remove("visible");
-      }
-      function showWarning(msg) {
-        const el = document.getElementById("warning-banner");
-        el.textContent = msg;
-        el.classList.add("visible");
-      }
-      function hideWarning() {
-        document.getElementById("warning-banner").classList.remove("visible");
-      }
-
-      function setStatus(type, text) {
-        document.getElementById("status-dot").className = `status-dot ${type}`;
-        document.getElementById("status-text").textContent = text;
-      }
-
-      function setUnsaved(val) {
-        document.getElementById("unsaved-bar").classList.toggle("visible", val);
-      }
-
-      function toast(msg, type = "") {
-        const el = document.getElementById("toast");
-        el.textContent = msg;
-        el.className = `toast ${type} show`;
-        setTimeout(() => el.classList.remove("show"), 3000);
-      }
-
-      function escHtml(str) {
-        return String(str || "")
-          .replace(/&/g, "&amp;")
-          .replace(/"/g, "&quot;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;");
-      }
-
-      // ── KEYBOARD ──────────────────────────────────────────
-      document.addEventListener("keydown", (e) => {
-        if (e.metaKey || e.ctrlKey) {
-          if (e.key === "s") {
-            e.preventDefault();
-            save();
-            return;
-          }
-          const input = e.target;
-          if (
-            input.tagName === "INPUT" &&
-            input.closest(".bullet-row") &&
-            (e.key === "b" || e.key === "B" || e.key === "i" || e.key === "I")
-          ) {
-            e.preventDefault();
-            wrapBulletFormat(input, e.key.toLowerCase() === "b" ? "**" : "*");
-          }
-        }
-      });
-
-      // ── RESIZER ───────────────────────────────────────────
-      const resizer = document.getElementById("resizer");
-      const leftPane = document.getElementById("form-pane");
-      let isResizing = false;
-      resizer.addEventListener("mousedown", () => {
-        isResizing = true;
-      });
-      document.addEventListener("mousemove", (e) => {
-        if (!isResizing) return;
-        const pct = (e.clientX / window.innerWidth) * 100;
-        if (pct > 20 && pct < 80) leftPane.style.width = pct + "%";
-      });
-      document.addEventListener("mouseup", () => {
-        isResizing = false;
-      });
-
-      init();
-    </script>
+    <script type="module" src="/js/app.js"></script>
   </body>
 </html>

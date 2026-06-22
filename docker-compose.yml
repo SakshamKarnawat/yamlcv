@@ -8,11 +8,13 @@ services:
     volumes:
       - ./generated:/app/generated
       - ./templates:/app/templates
+      - ./ui:/app/ui
+      - ./server.py:/app/server.py
     command:
       [
         "uv",
         "run",
         "server.py",
         "--details",
-        "/app/templates/jake/details.personal.yml",
+        "/app/templates/classic/details.personal.yml",
       ]

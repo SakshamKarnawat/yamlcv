@@ -4,8 +4,8 @@
 # ///
 """
 build.py — generates resume.tex from details YAML
-Usage:       uv run templates/jake/build.py --details templates/jake/details.personal.yml
-Watch mode:  uv run templates/jake/build.py --watch --details templates/jake/details.personal.yml
+Usage:       uv run templates/classic/build.py --details templates/classic/details.personal.yml
+Watch mode:  uv run templates/classic/build.py --watch --details templates/classic/details.personal.yml
 """
 
 import yaml
@@ -263,7 +263,7 @@ def build_preamble(opts):
     elif font == "outfit":
         font_pkg = r"""\usepackage{fontspec}
 \setmainfont{Outfit}[
-  Path=../templates/jake/fonts/,
+  Path=../templates/classic/fonts/,
   UprightFont={Outfit-Variable.ttf},
   BoldFont={Outfit-Variable.ttf},
   UprightFeatures={RawFeature={+wght=400}},
@@ -405,8 +405,14 @@ def main():
     result = subprocess.run(
         ["latexmk", f"-{latex_engine}", "-interaction=nonstopmode", output_file],
         cwd=output_dir,
-        capture_output=True
+        capture_output=True,
+        text=True,
     )
+
+    if result.returncode != 0:
+        err = (result.stderr or "") + (result.stdout or "")
+        print(f"✗ LaTeX build failed:\n{err}", file=sys.stderr)
+        sys.exit(1)
 
     pages = check_page_overflow(output_dir)
     if pages:
@@ -415,14 +421,34 @@ def main():
 
     print("✓ PDF build triggered")
 
+def is_unseeded_details_stub(path):
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = yaml.safe_load(f) or {}
+    except (yaml.YAMLError, OSError):
+        return False
+    if not isinstance(data, dict):
+        return True
+    heading = data.get("heading") or {}
+    if heading.get("name"):
+        return False
+    if data.get("experience") or data.get("projects") or data.get("education"):
+        return False
+    return bool(data.get("options"))
+
+
 def ensure_details_file(details_path):
-    if os.path.exists(details_path):
+    if os.path.exists(details_path) and not is_unseeded_details_stub(details_path):
         return
     default = os.path.join(os.path.dirname(details_path), "details.yml")
-    if os.path.exists(default):
-        os.makedirs(os.path.dirname(details_path), exist_ok=True)
-        shutil.copy(default, details_path)
+    if not os.path.exists(default):
+        return
+    os.makedirs(os.path.dirname(details_path), exist_ok=True)
+    if os.path.exists(details_path):
+        print(f"→ Replacing unseeded stub {details_path} from {default}")
+    else:
         print(f"→ Created {details_path} from {default}")
+    shutil.copy(default, details_path)
 
 class YMLHandler(FileSystemEventHandler):
     def __init__(self, details_path):
@@ -446,7 +472,6 @@ if __name__ == "__main__":
 
     if args.details:
         ensure_details_file(details_path)
-
     if args.watch:
         watch_dir = os.path.dirname(details_path)
         observer = Observer()

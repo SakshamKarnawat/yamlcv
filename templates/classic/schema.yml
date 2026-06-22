@@ -1,6 +1,6 @@
-# schema.yml — defines the form structure for the jake template
-# DO NOT EDIT — this file drives the web UI form
-# To modify resume fields, edit details.yml (CLI) or use the web form
+# schema.yml — defines the form structure for the classic template
+# Drives the web UI form. Template authors: copy and edit when adding a new template.
+# End users: edit details YAML or use the web form — not this file.
 
 options:
   - key: icons
@@ -56,7 +56,7 @@ sections:
         label: "Full Name"
         type: text
         required: true
-        placeholder: "Jake Ryan"
+        placeholder: "Taylor Morgan"
 
       - key: phone
         label: "Phone"
@@ -69,28 +69,28 @@ sections:
         label: "Email"
         type: email
         required: false
-        placeholder: "jake@example.com"
+        placeholder: "taylor@example.com"
         hint: "optional"
 
       - key: linkedin
         label: "LinkedIn"
         type: text
         required: false
-        placeholder: "linkedin.com/in/jakeryan"
+        placeholder: "linkedin.com/in/taylormorgan"
         hint: "optional"
 
       - key: github
         label: "GitHub"
         type: text
         required: false
-        placeholder: "github.com/jakeryan"
+        placeholder: "github.com/taylormorgan"
         hint: "optional"
 
       - key: website
         label: "Website"
         type: text
         required: false
-        placeholder: "jakeryan.dev"
+        placeholder: "taylormorgan.dev"
 
       - key: title
         label: "Title"
@@ -219,13 +219,6 @@ sections:
         required: false
         placeholder: "github.com/you/project"
         hint: "optional — no https://"
-
-      - key: gif
-        label: "GIF/Demo URL"
-        type: text
-        required: false
-        placeholder: "https://imgur.com/demo.gif"
-        hint: "optional"
 
       - key: bullets
         label: "Bullet Points"
